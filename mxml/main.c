@@ -2,22 +2,28 @@
 #include "mxml.h"
 
 
+struct xmltrees {
+    mxml_node_t *main;
+    mxml_node_t *child;
+} typedef xmltrees_t;
+
+
 void AppendXMLData(mxml_node_t *d, mxml_node_t *node) {
 
     mxml_node_t *xml;
     mxml_node_t *body;
-    uint32_t count = 0;
-    const char *field;
+    // uint32_t count = 0;
+    // const char *field;
 
-    if ((field = mxmlElementGetAttr(d, "count"))) {
-        count = atoi(field);
-    }
+    // if ((field = mxmlElementGetAttr(d, "count"))) {
+    //     count = atoi(field);
+    // }
 
-    mxmlElementSetAttrf(d, "count", "%d", ++count);
+    // mxmlElementSetAttrf(d, "count", "%d", ++count);
 
-    xml = mxmlFindElement(d, d, "ParameterList", NULL, NULL, MXML_DESCEND);
-    mxmlElementSetAttrf(xml, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", count);
-    xml = mxmlNewElement(xml, "ParameterValueStruct");
+    // xml = mxmlFindElement(d, d, "ParameterList", NULL, NULL, MXML_DESCEND);
+    // mxmlElementSetAttrf(xml, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", count);
+    xml = mxmlNewElement(d, "ParameterValueStruct");
 
     body = mxmlNewElement(xml, "Name");
     mxmlNewText(body, 0, mxmlGetText(node, 0));
@@ -25,11 +31,15 @@ void AppendXMLData(mxml_node_t *d, mxml_node_t *node) {
     body = mxmlNewElement(xml, "Value");
     mxmlNewText(body, 0, "AA");
     mxmlElementSetAttr(body, "xsi:type", "xsd:boolean");
+
 }
+
+
 
 void element_cb(mxml_node_t *node, mxml_sax_event_t event, void *data) {
 
-    mxml_node_t *d = data;
+    mxml_node_t *d = ((xmltrees_t *)data)->main;
+    mxml_node_t *dchild = ((xmltrees_t *)data)->child;
     mxml_node_t *xml;
     mxml_node_t *header;
     mxml_node_t *header_child;
@@ -55,11 +65,6 @@ void element_cb(mxml_node_t *node, mxml_sax_event_t event, void *data) {
             }
         }
 
-        // } else if ((prevfield = mxmlElementGetAttr(d, "field")))
-        //     mxmlElementSetAttrf(d, "field", "%s-%s", prevfield, field);
-        // else
-        //     mxmlElementSetAttr(d, "field", field);
-
         break;
     case MXML_SAX_DATA:
         // field = mxmlElementGetAttr(d, "field");
@@ -82,19 +87,6 @@ void element_cb(mxml_node_t *node, mxml_sax_event_t event, void *data) {
 
             mxmlNewText(xml, 0, mxmlGetText(node, 0));
 
-        // } else if (strstr(field, "soapenv:Body")) {
-
-            // xml = mxmlNewElement(d, "soap:Body");
-
-            // if (strstr(field, "GetParameterValues")) {
-            //     body = mxmlNewElement(xml, "cwmp:GetParameterValuesResponse");
-
-            //     body = mxmlNewElement(body, "ParameterList");
-
-            //     AppendXMLData(d, node);
-            // } else if (strstr(field, "SetParameterValues"))
-            //     body = mxmlNewElement(xml, "cwmp:SetParameterValuesResponse");
-
         }  else if (!strcmp("string", name)) {
             header = mxmlGetParent(header_child);
             parent = mxmlGetParent(header);
@@ -102,14 +94,22 @@ void element_cb(mxml_node_t *node, mxml_sax_event_t event, void *data) {
 
             if (!strcmp("cwmp:GetParameterValues", name)) {
 
-                if (!mxmlElementGetAttr(d, "body")) {
-                    mxmlElementSetAttr(d, "body", "1");
-                    xml = mxmlNewElement(d, "soap:Body");
-                    body = mxmlNewElement(xml, "cwmp:GetParameterValuesResponse");
+                // if (!mxmlElementGetAttr(d, "body")) {
+
+                //     mxmlElementSetAttr(d, "body", "1");
+                //     xml = mxmlNewElement(d, "soap:Body");
+                //     body = mxmlNewElement(xml, "cwmp:GetParameterValuesResponse");
+                //     body = mxmlNewElement(body, "ParameterList");
+                // }
+
+                if (!(body = mxmlFindElement(dchild, dchild, "ParameterList", NULL, NULL, MXML_DESCEND))) {
+                    body = mxmlNewElement(dchild, "cwmp:GetParameterValuesResponse");
                     body = mxmlNewElement(body, "ParameterList");
                 }
 
-                AppendXMLData(d, node);
+                AppendXMLData(body, node);
+                mxmlRetain(dchild);
+
             }
         }
         break;
@@ -126,73 +126,66 @@ int main(int argc, char const *argv[])
 // <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:cwmp="urn:dslforum-org:cwmp-1-0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Header><cwmp:ID soap:mustUnderstand="1">1449BC177008:1681374896884</cwmp:ID></soap:Header><soap:Body><cwmp:GetParameterValuesResponse><ParameterList soap-enc:arrayType="cwmp:ParameterValueStruct[20]"><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Enable</Name><Value xsi:type="xsd:boolean">1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status</Name><Value xsi:type="xsd:string">Up</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPInterface.1.IPInterfaceIPAddress</Name><Value xsi:type="xsd:string">192.168.1.1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPServerEnable</Name><Value xsi:type="xsd:boolean">1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.X_00507F_Status.LAN.IPv6.IPAddress</Name><Value xsi:type="xsd:string">FE80::6EEB:9525:8AD4:A30B/64</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.2.LANEthernetInterfaceConfig.1.Enable</Name><Value xsi:type="xsd:boolean">0</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.2.LANEthernetInterfaceConfig.1.Status</Name><Value xsi:type="xsd:string">Down</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.2.LANHostConfigManagement.IPInterface.1.IPInterfaceIPAddress</Name><Value xsi:type="xsd:string">192.168.2.1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.2.LANHostConfigManagement.DHCPServerEnable</Name><Value xsi:type="xsd:boolean">1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.X_00507F_Status.LAN.IPv6.IPAddress</Name><Value xsi:type="xsd:string">FE80::6EEB:9525:8AD4:A30B/64</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.3.LANEthernetInterfaceConfig.1.Enable</Name><Value xsi:type="xsd:boolean">0</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.3.LANEthernetInterfaceConfig.1.Status</Name><Value xsi:type="xsd:string">Down</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.3.LANHostConfigManagement.IPInterface.1.IPInterfaceIPAddress</Name><Value xsi:type="xsd:string">192.168.3.1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.3.LANHostConfigManagement.DHCPServerEnable</Name><Value xsi:type="xsd:boolean">1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.X_00507F_Status.LAN.IPv6.IPAddress</Name><Value xsi:type="xsd:string">FE80::6EEB:9525:8AD4:A30B/64</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.4.LANEthernetInterfaceConfig.1.Enable</Name><Value xsi:type="xsd:boolean">0</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.4.LANEthernetInterfaceConfig.1.Status</Name><Value xsi:type="xsd:string">Down</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.4.LANHostConfigManagement.IPInterface.1.IPInterfaceIPAddress</Name><Value xsi:type="xsd:string">192.168.4.1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.LANDevice.4.LANHostConfigManagement.DHCPServerEnable</Name><Value xsi:type="xsd:boolean">1</Value></ParameterValueStruct><ParameterValueStruct><Name>InternetGatewayDevice.X_00507F_Status.LAN.IPv6.IPAddress</Name><Value xsi:type="xsd:string">FE80::6EEB:9525:8AD4:A30B/64</Value></ParameterValueStruct></ParameterList></cwmp:GetParameterValuesResponse></soap:Body></soap:Envelope>
 
 
-    mxml_node_t *tree, *xml, *list;
+    mxml_node_t *tree;
+    mxml_node_t *body;
+    xmltrees_t *xml;
 
     // tree = mxmlSAXLoadString(NULL, xmldata, MXML_TEXT_CALLBACK, element_cb, NULL);
     // mxmlDelete(tree);
 
     mxmlSetWrapMargin(0);
 
-    xml = mxmlNewElement(NULL, "soap:Envelope");
-    // mxmlElementSetAttr(xml, "xmlns:soap", "http://schemas.xmlsoap.org/soap/envelope/");
-    // mxmlElementSetAttr(xml, "xmlns:soap-enc", "http://schemas.xmlsoap.org/soap/encoding/");
-    // mxmlElementSetAttr(xml, "xmlns:cwmp", "urn:dslforum-org:cwmp-1-0");
-    // mxmlElementSetAttr(xml, "xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
-    // mxmlElementSetAttr(xml, "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    // for (int i = 0; i < 10000; i++) {
+
+    xml->main = mxmlNewElement(NULL, "soap:Envelope");
+
+    xml->child = mxmlNewElement(NULL, "soap:Body");
 
 
     tree = mxmlSAXLoadString(NULL, xmldata, MXML_TEXT_CALLBACK, element_cb, xml);
 
-    mxmlElementDeleteAttr(xml, "body");
-    mxmlElementDeleteAttr(xml, "count");
+    // mxmlSetInteger(xml, 10);
+
+    // mxmlElementDeleteAttr(xml->main, "body");
+    // mxmlElementDeleteAttr(xml->main, "count");
 
     mxmlDelete(tree);
 
-    // header = mxmlNewElement(xml, "soap:Header");
-    // header = mxmlNewElement(header, "cwmp:ID");
-    // mxmlElementSetAttr(header, "soap:mustUnderstand", "1");
-    // mxmlNewText(header, 0, "1449BC177008:1681374896884");
-
-    // header = mxmlNewElement(xml, "soap:Body");
-    // header = mxmlNewElement(header, "cwmp:GetParameterValuesResponse");
-    // header = mxmlNewElement(header, "ParameterList");
-
-    // body = mxmlNewElement(header, "ParameterValueStruct");
-
-    // data = mxmlNewElement(body, "Name");
-    // mxmlNewText(data, 0, "InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Enable");
-    // data = mxmlNewElement(body, "Value");
-    // mxmlElementSetAttr(data, "xsi:type", "xsd:boolean");
-    // mxmlNewInteger(data, 1);
-
-    // data = mxmlNewElement(body, "Name");
-    // mxmlNewText(data, 0, "InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.Status");
-    // data = mxmlNewElement(body, "Value");
-    // mxmlElementSetAttr(data, "xsi:type", "xsd:string");
-    // mxmlNewText(data, 0, "Up");
-
-    // mxmlElementSetAttrf(header, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", 2);
-
-
-    // char buf[1000];
-    // uint32_t len = mxmlSaveString(xml, buf, sizeof(buf), MXML_NO_CALLBACK);
-//    char *buf = mxmlSaveAllocString(xml, MXML_NO_CALLBACK);
-
-//    char *buf = mxmlSaveAllocString(xml, MXML_NO_CALLBACK);
     char *buf;
     if ((buf = malloc(101))) {
-        uint32_t len = mxmlSaveString(xml, buf, 100, MXML_NO_CALLBACK);
+
+        tree = mxmlFindElement(xml->child, xml->child, "ParameterList", NULL, NULL, MXML_DESCEND);
+        mxmlElementSetAttrf(tree, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", mxmlGetRefCount(xml->child) - 1);
+
+        mxmlAdd(xml->main, 1, NULL, xml->child);
+
+        uint32_t len = mxmlSaveString(xml->main, buf, 100, MXML_NO_CALLBACK);
 
         if (len > 100 && (buf = realloc(buf, len + 1))) {
-            mxmlSaveString(xml, buf, len, MXML_NO_CALLBACK);
+            mxmlSaveString(xml->main, buf, len, MXML_NO_CALLBACK);
         }
 
         printf("%d buf=%s\n", len, buf);
 
         free(buf);
+
+
+        // len = mxmlSaveString((xml->child), buf, 100, MXML_NO_CALLBACK);
+
+        // if (len > 100 && (buf = realloc(buf, len + 1))) {
+        //     mxmlSaveString(xml->child, buf, len, MXML_NO_CALLBACK);
+        // }
+
+        // printf("%d buf=%s\n", len, buf);
+
+        // free(buf);
+
+
     }
 
-    mxmlDelete(xml);
+    mxmlDelete(xml->main);
+
+    // }
 
     return 0;
 }
