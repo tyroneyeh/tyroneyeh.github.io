@@ -48,8 +48,8 @@ void element_cb(mxml_node_t *node, mxml_sax_event_t event, void *data) {
     const char *field;
     const char *prevfield;
     const char *name;
-    uint32_t count;
-    uint32_t i;
+    unsigned int count;
+    unsigned int i;
 
     switch (event) {
     case MXML_SAX_ELEMENT_OPEN:
@@ -127,8 +127,8 @@ int main(int argc, char const *argv[])
 
 
     mxml_node_t *tree;
-
-    xmltrees_t *xml;
+    mxml_node_t *body;
+    xmltrees_t xml;
 
     // tree = mxmlSAXLoadString(NULL, xmldata, MXML_TEXT_CALLBACK, element_cb, NULL);
     // mxmlDelete(tree);
@@ -137,12 +137,12 @@ int main(int argc, char const *argv[])
 
     // for (int i = 0; i < 10000; i++) {
 
-    xml->main = mxmlNewElement(NULL, "soap:Envelope");
+    xml.main = mxmlNewElement(NULL, "soap:Envelope");
 
-    xml->child = mxmlNewElement(NULL, "soap:Body");
+    xml.child = mxmlNewElement(NULL, "soap:Body");
 
 
-    tree = mxmlSAXLoadString(NULL, xmldata, MXML_TEXT_CALLBACK, element_cb, xml);
+    tree = mxmlSAXLoadString(NULL, xmldata, MXML_TEXT_CALLBACK, element_cb, &xml);
 
     // mxmlSetInteger(xml, 10);
 
@@ -154,16 +154,16 @@ int main(int argc, char const *argv[])
     char *buf;
     if ((buf = malloc(101))) {
 
-        tree = mxmlFindElement(xml->child, xml->child, "ParameterList", NULL, NULL, MXML_DESCEND);
-        mxmlElementSetAttrf(tree, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", mxmlGetRefCount(xml->child) - 1);
+        tree = mxmlFindElement(xml.child, xml.child, "ParameterList", NULL, NULL, MXML_DESCEND);
+        mxmlElementSetAttrf(tree, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", mxmlGetRefCount(xml.child) - 1);
 
-        mxmlAdd(xml->main, 1, NULL, xml->child);
-        mxmlDelete(xml->child);
+        mxmlAdd(xml.main, 1, NULL, xml.child);
+        mxmlDelete(xml.child);
 
-        uint32_t len = mxmlSaveString(xml->main, buf, 100, MXML_NO_CALLBACK);
+        unsigned int len = mxmlSaveString(xml.main, buf, 100, MXML_NO_CALLBACK);
 
         if (len > 100 && (buf = realloc(buf, len + 1))) {
-            mxmlSaveString(xml->main, buf, len, MXML_NO_CALLBACK);
+            mxmlSaveString(xml.main, buf, len, MXML_NO_CALLBACK);
         }
 
         printf("%d buf=%s\n", len, buf);
@@ -184,7 +184,7 @@ int main(int argc, char const *argv[])
 
     }
 
-    mxmlDelete(xml->main);
+    mxmlDelete(xml.main);
 
     // }
 
