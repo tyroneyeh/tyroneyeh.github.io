@@ -158,6 +158,7 @@ int main(int argc, char const *argv[])
         mxmlElementSetAttrf(tree, "soap-enc:arrayType", "cwmp:ParameterValueStruct[%d]", mxmlGetRefCount(xml->child) - 1);
 
         mxmlAdd(xml->main, 1, NULL, xml->child);
+        mxmlDelete(xml->child);
 
         uint32_t len = mxmlSaveString(xml->main, buf, 100, MXML_NO_CALLBACK);
 
