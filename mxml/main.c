@@ -127,7 +127,7 @@ int main(int argc, char const *argv[])
 
 
     mxml_node_t *tree;
-    mxml_node_t *body;
+
     xmltrees_t *xml;
 
     // tree = mxmlSAXLoadString(NULL, xmldata, MXML_TEXT_CALLBACK, element_cb, NULL);
