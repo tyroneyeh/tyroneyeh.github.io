@@ -10573,10 +10573,7 @@
       <div
         v-for="video in displayedVideos"
         :key="video.id"
-        class="border rounded-lg p-4 shadow-md"
-      >
-        <h2 class="text-lg font-semibold mb-2">{{ video.title }}</h2>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2">發布日期: {{ formatDate(video.publishedAt) }} {{ video.isShort ? '短片' : '一般影片' }} {{ video.description }}</p>
+        class="border rounded-lg p-4 shadow-md">
         <div class="relative" style="padding-bottom: 56.25%;">
           <iframe title="TY YouTube channel"
             :id="`player-${video.id}`"
@@ -10588,6 +10585,7 @@
             @load="setupPlayer(video.id)"
           ></iframe>
         </div>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2">發布日期: {{ formatDate(video.publishedAt) }} {{ video.isShort ? '短片' : '一般影片' }} {{ video.description }}</p>
         <p v-if="video.error" class="text-red-500 text-sm mt-2">
           錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
           <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
