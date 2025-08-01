@@ -10571,10 +10571,8 @@
         placeholder="輸入影片標題搜尋..."
         class="border rounded-lg px-4 py-2 w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-      <select
-        v-model="sortOrder"
-        class="border rounded-lg px-4 py-2 w-full sm:w-1/4"
-      >
+      <select v-model="sortOrder"
+        class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
         <option value="newest">從新到舊</option>
         <option value="oldest">從舊到新</option>
       </select>
@@ -10592,18 +10590,18 @@
           <iframe title="TY YouTube channel"
             :id="`player-${video.id}`"
             class="absolute top-0 left-0 w-full h-full"
-            :src="`https://www.youtube.com/embed/${video.id}?${video.isShort ? '' : 'playbackRate=2&'}iv_load_policy=3&enablejsapi=1`"
+            :src="`https://www.youtube.com/embed/${video.id}?iv_load_policy=3&enablejsapi=1&vq=hd1080`"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
+            :data-isshort="`${video.isShort}`"
             @error="handleVideoError(video.id)"
-            @load="setupPlayer(video.id)"
-          ></iframe>
+            @load="setupPlayer(video.id)">
+          </iframe>
         </div>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2">發布日期: {{ formatDate(video.publishedAt) }} {{ video.isShort ? '短片' : '一般影片' }} {{ video.description }}</p>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2">發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
         <p v-if="video.error" class="text-red-500 text-sm mt-2">
           錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
           <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
-          <br>若播放速度非預期，請在 YouTube 播放器中手動設置
         </p>
       </div>
     </div>
@@ -10627,7 +10625,6 @@
         const loadMoreTrigger = ref(null);
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
-        const activePlayerId = ref(null); // 當前播放的影片 ID
 
         // 從 JSON-LD 載入資料
         const loadJsonLdData = () => {
@@ -10641,9 +10638,7 @@
                 description: item.item.description,
                 publishedAt: item.item.uploadDate,
                 url: item.url,
-                thumbnailUrl: item.item.thumbnailUrl,
-                error: false,
-                isShort: item.item.isShort || false
+                isShort: item.item.isShort
               }));
             } catch (e) {
               console.error('解析 JSON-LD 失敗:', e);
@@ -10652,32 +10647,14 @@
           }
         };
 
-        // JSON-LD 結構化資料（用於 SEO）
-        const jsonLdData = computed(() => ({
-          '@context': 'https://schema.org',
-          '@type': 'ItemList',
-          itemListElement: videos.value.map((video, index) => ({
-            '@type': 'ListItem',
-            position: index + 1,
-            url: video.url,
-            item: {
-              '@type': 'VideoObject',
-              name: video.title,
-              description: video.description,
-              uploadDate: video.publishedAt,
-              embedUrl: `https://www.youtube.com/embed/${video.id}`,
-              thumbnailUrl: video.thumbnailUrl,
-              isShort: video.isShort
-            }
-          }))
-        }));
-
         const filteredVideos = computed(() => {
           const query = searchQuery.value.trim().toLowerCase();
-          if (!query) return videos.value;
-          return videos.value.filter(video =>
-            video.title.toLowerCase().includes(query)
-          );
+          if (!query || query.length < 2) return videos.value;
+          return videos.value.filter(video => {
+            return video.title.toLowerCase().includes(query)
+            || video.description.toLowerCase().includes(query)
+            || video.publishedAt.replace(/[-:TZ]/g, '').includes(query);
+          });
         });
 
         const sortedVideos = computed(() => {
@@ -10705,12 +10682,6 @@
           });
         };
 
-        const loadMore = () => {
-          if (hasMoreVideos.value) {
-            currentPage.value++;
-          }
-        };
-
         const handleVideoError = (id) => {
           const video = videos.value.find(v => v.id === id);
           if (video) {
@@ -10721,36 +10692,7 @@
         const setupPlayer = (id) => {
           const iframe = document.getElementById(`player-${id}`);
           if (!iframe) return;
-
-          // 監聽播放事件
-          window.addEventListener('message', (event) => {
-            if (event.source === iframe.contentWindow) {
-              try {
-                const data = JSON.parse(event.data);
-                if (data.event === 'infoDelivery' && data.info?.playerState === 1) { // 播放狀態
-                  if (activePlayerId.value !== id) {
-                    stopOtherVideos(id);
-                    activePlayerId.value = id;
-                  }
-                }
-              } catch (e) {
-                console.log(e)
-              }
-            }
-          });
-        };
-
-        const stopOtherVideos = (currentId) => {
-          displayedVideos.value.forEach(video => {
-            if (video.id !== currentId) {
-              const iframe = document.getElementById(`player-${video.id}`);
-              if (iframe) {
-                const src = iframe.src;
-                iframe.src = '';
-                iframe.src = src;
-              }
-            }
-          });
+          iframe.dataset.isshort != "1" && iframe.contentWindow.postMessage('{"event": "command", "func": "setPlaybackRate", "args": [2, true]}', '*');
         };
 
         onMounted(async () => {
@@ -10761,8 +10703,11 @@
           const loadMoreObserver = new IntersectionObserver(
             (entries) => {
               entries.forEach(entry => {
-                if (entry.isIntersecting && hasMoreVideos.value) {
-                  loadMore();
+                if (entry.isIntersecting && hasMoreVideos.value && hasMoreVideos.value) {
+                  currentPage.value++;
+                  document.querySelectorAll('iframe').forEach(v => {
+                    v.contentWindow.postMessage('{"event": "command", "func": "stopVideo"}', '*');
+                  });
                 }
               });
             },
@@ -10786,14 +10731,11 @@
           loadMoreTrigger,
           searchQuery,
           sortOrder,
-          activePlayerId,
-          jsonLdData,
           filteredVideos,
           sortedVideos,
           displayedVideos,
           hasMoreVideos,
           formatDate,
-          loadMore,
           handleVideoError,
           setupPlayer
         };
