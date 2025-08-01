@@ -10576,6 +10576,15 @@
         <option value="newest">從新到舊</option>
         <option value="oldest">從舊到新</option>
       </select>
+      <select v-model="playSpeed" @change="setupPlayer"
+        class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
+        <option value="0.25">0.25倍速</option>
+        <option value="0.5">0.5倍速</option>
+        <option value="1">正常</option>
+        <option value="1.25">1.25倍速</option>
+        <option value="1.5">1.5倍速</option>
+        <option value="2">2倍速</option>
+      </select>
     </div>
     <!-- 影片列表 -->
     <div v-if="displayedVideos.length === 0" class="text-center text-gray-500">
@@ -10625,6 +10634,7 @@
         const loadMoreTrigger = ref(null);
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
+        const playSpeed = ref('2');
 
         // 從 JSON-LD 載入資料
         const loadJsonLdData = () => {
@@ -10690,9 +10700,15 @@
         };
 
         const setupPlayer = (id) => {
-          const iframe = document.getElementById(`player-${id}`);
-          if (!iframe) return;
-          iframe.dataset.isshort != "1" && iframe.contentWindow.postMessage('{"event": "command", "func": "setPlaybackRate", "args": [2, true]}', '*');
+          var iframes = [];
+          if (typeof id == "string") {
+            iframes.push(document.getElementById(`player-${id}`));
+          } else {
+            iframes = document.querySelectorAll('iframe[data-isshort="0"]');
+          }
+          iframes.forEach(iframe => {
+            iframe.dataset.isshort == "0" && iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, '*');
+          });
         };
 
         onMounted(async () => {
@@ -10731,6 +10747,7 @@
           loadMoreTrigger,
           searchQuery,
           sortOrder,
+          playSpeed,
           filteredVideos,
           sortedVideos,
           displayedVideos,
