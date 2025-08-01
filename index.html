@@ -10576,9 +10576,7 @@
         class="border rounded-lg p-4 shadow-md"
       >
         <h2 class="text-lg font-semibold mb-2">{{ video.title }}</h2>
-        <p class="text-sm text-gray-600 mb-2">發布日期: {{ formatDate(video.publishedAt) }}</p>
-        <p class="text-sm text-gray-600 mb-2">{{ video.isShort ? 'Shorts' : '一般影片' }}</p>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2">{{ video.description }}</p>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2">發布日期: {{ formatDate(video.publishedAt) }} {{ video.isShort ? '短片' : '一般影片' }} {{ video.description }}</p>
         <div class="relative" style="padding-bottom: 56.25%;">
           <iframe title="TY YouTube channel"
             :id="`player-${video.id}`"
@@ -10724,7 +10722,7 @@
                   }
                 }
               } catch (e) {
-                // 忽略無效的 postMessage
+                console.log(e)
               }
             }
           });
