@@ -10695,8 +10695,7 @@
         v-model="searchQuery"
         type="text"
         placeholder="輸入影片標題搜尋..."
-        class="border rounded-lg px-4 py-2 w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+        class="border rounded-lg px-4 py-2 w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       <select v-model="sortOrder"
         class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
         <option value="newest">從新到舊</option>
@@ -10718,14 +10717,14 @@
     </div>
     <div v-else class="flex flex-col gap-4">
       <div
-        v-for="(video in displayedVideos"
+        v-for="video in displayedVideos"
         :key="video.id"
         class="border rounded-lg p-1 shadow-md">
         <div class="relative" style="padding-bottom: 56.25%;">
           <iframe title="TY YouTube channel"
             :id="`player-${video.id}`"
             class="absolute top-0 left-0 w-full h-full"
-            :src="`https://www.youtube.com/embed/${video.id}?iv_load_policy=3&enablejsapi=1&vq=hd1080`"
+            :src="`https://www.youtube.com/embed/${video.id}?iv_load_policy=3&enablejsapi=1`"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
             :data-isshort="`${video.isShort}`"
@@ -10761,6 +10760,8 @@
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
         const playSpeed = ref('2');
+
+        const yturl = 'https://www.youtube.com';
 
         // 從 JSON-LD 載入資料
         const loadJsonLdData = () => {
@@ -10833,7 +10834,7 @@
             iframes = document.querySelectorAll('iframe[data-isshort="0"]');
           }
           iframes.forEach(iframe => {
-            iframe.dataset.isshort == "0" && iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, '*');
+            iframe.dataset.isshort == "0" && iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl);
           });
         };
 
@@ -10848,7 +10849,7 @@
                 if (entry.isIntersecting && hasMoreVideos.value && hasMoreVideos.value) {
                   currentPage.value++;
                   document.querySelectorAll('iframe').forEach(v => {
-                    v.contentWindow.postMessage('{"event": "command", "func": "stopVideo"}', '*');
+                    v.contentWindow.postMessage('{"event": "command", "func": "stopVideo"}', yturl);
                   });
                 }
               });
@@ -10860,10 +10861,10 @@
           if (loadMoreTrigger.value) {
             loadMoreObserver.observe(loadMoreTrigger.value);
           }
+        });
 
-          onUnmounted(() => {
-            loadMoreObserver.disconnect();
-          });
+        onUnmounted(() => {
+          loadMoreObserver.disconnect();
         });
 
         return {
