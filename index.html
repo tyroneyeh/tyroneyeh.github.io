@@ -10716,7 +10716,7 @@
       無符合條件的影片
     </div>
     <div v-else class="flex flex-col gap-4">
-      <div class="border rounded-lg p-1 shadow-md" v-if="hasHash">
+      <div class="border rounded-lg p-1 shadow-md" v-if="hashIndex">
         <div class="relative" style="padding-bottom: 56.25%;">
           <iframe title="TY YouTube channel"
             class="absolute top-0 left-0 w-full h-full"
@@ -10725,6 +10725,7 @@
             allowfullscreen>
           </iframe>
         </div>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`#${hashIndex}`">#{{ hashIndex }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
       </div>
       <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
         <div class="relative" style="padding-bottom: 56.25%;">
@@ -10739,7 +10740,7 @@
             @load="setupPlayer(video.id)">
           </iframe>
         </div>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2">發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`#${video.index}`">#{{ video.index }}</a> 發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
         <p v-if="video.error" class="text-red-500 text-sm mt-2">
           錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
           <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
@@ -10767,7 +10768,7 @@
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
         const playSpeed = ref('2');
-        const hasHash = ref(0);
+        const hashIndex = ref(0);
         const hashVideo = ref('');
 
         const yturl = ref('https://www.youtube.com');
@@ -10784,7 +10785,8 @@
                 description: item.item.description,
                 publishedAt: item.item.uploadDate,
                 url: item.url,
-                isShort: item.item.isShort
+                isShort: item.item.isShort,
+                index: item.position
               }));
             } catch (e) {
               console.error('解析 JSON-LD 失敗:', e);
@@ -10846,6 +10848,13 @@
           });
         };
 
+        const goTo = (hashNum) => {
+          if (hashNum && hashNum > 0 && hashNum <= videos.value.length) {
+            hashIndex.value = parseInt(hashNum);
+            hashVideo.value = `${yturl.value}/embed/${videos.value[hashIndex.value - 1].id}?iv_load_policy=3&enablejsapi=1`;
+          }
+        };
+
         onMounted(async () => {
           // 載入 JSON-LD 資料
           loadJsonLdData();
@@ -10867,11 +10876,7 @@
 
           await nextTick(); // 確保 DOM 渲染完成
 
-          const hashNum = location.hash.slice(1);
-          if (hashNum.length && hashNum > 1 && hashNum <= videos.value.length) {
-            hasHash.value = 1;
-            hashVideo.value = `${yturl.value}/embed/${videos.value[hashNum - 1].id}?iv_load_policy=3&enablejsapi=1`;
-          }
+          goTo(location.hash.slice(1));
 
           if (loadMoreTrigger.value) {
             loadMoreObserver.observe(loadMoreTrigger.value);
@@ -10898,7 +10903,7 @@
           handleVideoError,
           setupPlayer,
           yturl,
-          hasHash,
+          hashIndex,
           hashVideo
         };
       }
