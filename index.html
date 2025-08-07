@@ -10937,7 +10937,6 @@
                   hashVideo.value = `${yturl.value}/embed/${videos.value[hashIndex.value - 1].id}?iv_load_policy=3&enablejsapi=1`;
                 }
               } else if (event.data.includes('"event":"onReady"')) {
-                console.log(event.data);
                 videos.value[hashIndex.value - 1].isShort == "0" && hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
 
                 hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
