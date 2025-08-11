@@ -10919,7 +10919,7 @@
       無符合條件的影片
     </div>
     <div v-else class="flex flex-col gap-4">
-      <div class="border rounded-lg p-1 shadow-md" v-show="hashIndex">
+      <div id="player" class="border rounded-lg p-1 shadow-md" v-show="hashIndex">
         <div class="relative" style="padding-bottom: 56.25%;">
           <iframe title="TY YouTube channel"
             class="absolute top-0 left-0 w-full h-full"
@@ -10931,7 +10931,7 @@
         </div>
         <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`#${hashIndex}`">#{{ hashIndex }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
       </div>
-      <div v-for="video in displayedVideos" :key="video.id" :id="video.index" class="border rounded-lg p-1 shadow-md">
+      <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
         <div class="relative" style="padding-bottom: 56.25%;">
           <iframe title="TY YouTube channel"
             :id="`player-${video.id}`"
@@ -11131,7 +11131,15 @@
             hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
           });
 
-          goTo(location.hash.slice(1));
+          const hashID = location.hash.slice(1);
+          if (hashID != '') {
+            goTo(parseInt(hashID));
+            await nextTick();
+            document.getElementById('player').scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
 
           if (loadMoreTrigger.value) {
             loadMoreObserver.observe(loadMoreTrigger.value);
