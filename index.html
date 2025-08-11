@@ -11113,7 +11113,7 @@
                 currentVideoID = videoData.info.videoData.video_id;
               }
               currentVideoID && document.getElementById(`player-${currentVideoID}`)?.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-            } else if (event.data.includes('"playerState":0')) {
+            } else if (hashIndex.value && event.data.includes('"playerState":0')) {
               let idx = hashIndex.value + 1;
               if (idx <= videos.value.length) {
                 hashIndex.value = idx;
