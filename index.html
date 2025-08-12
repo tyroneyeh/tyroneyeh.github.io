@@ -11112,7 +11112,12 @@
                 currentVideoID && document.getElementById(`player-${currentVideoID}`)?.contentWindow.postMessage('{"event": "command", "func": "stopVideo"}', '*');
                 currentVideoID = videoData.info.videoData.video_id;
               }
-              currentVideoID && document.getElementById(`player-${currentVideoID}`)?.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
+              if (currentVideoID) {
+                const vid = document.getElementById(`player-${currentVideoID}`);
+                if (vid && vid.dataset.isshort == "0") {
+                  vid.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
+                }
+              }
             } else if (hashIndex.value && event.data.includes('"playerState":0')) {
               let idx = hashIndex.value + 1;
               if (idx <= videos.value.length) {
