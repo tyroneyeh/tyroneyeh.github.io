@@ -10889,8 +10889,8 @@
         <li v-for="option in filteredVideos"
           :key="index"
           @mousedown.prevent="goTo(option.index)"
-          class="px-3 py-2 cursor-pointer hover:bg-gray-100">
-          {{ option.title }}
+          class="px-3 py-2 hover:bg-gray-100">
+          <a class="items-center flex cursor-pointer"><img :src="option.thumbnail" :alt="option.name" class="h-5 pr-2"> {{ option.name }}</a>
         </li>
       </ul>
       <input
@@ -10989,7 +10989,8 @@
               const jsonLd = JSON.parse(jsonLdScript.textContent);
               videos.value = jsonLd.itemListElement.map(item => ({
                 id: item.item.embedUrl.split('/').pop(),
-                title: item.item.name,
+                thumbnail: item.item.thumbnailUrl,
+                name: item.item.name,
                 description: item.item.description,
                 publishedAt: item.item.uploadDate,
                 url: item.url,
@@ -11006,7 +11007,7 @@
           const query = searchQuery.value.trim().toLowerCase();
           if (!query || query.length < 2) return videos.value;
           return videos.value.filter(video => {
-            return video.title.toLowerCase().includes(query)
+            return video.name.toLowerCase().includes(query)
             || video.description.toLowerCase().includes(query)
             || video.publishedAt.replace(/[-:TZ]/g, '').includes(query)
             || (/^#\d+$/.test(query) && video.index == query.slice(1));
@@ -11094,9 +11095,6 @@
               entries.forEach(entry => {
                 if (entry.isIntersecting && hasMoreVideos.value && hasMoreVideos.value) {
                   currentPage.value++;
-                  document.querySelectorAll('iframe').forEach(v => {
-                    v.contentWindow.postMessage('{"event": "command", "func": "stopVideo"}', yturl.value);
-                  });
                 }
               });
             },
