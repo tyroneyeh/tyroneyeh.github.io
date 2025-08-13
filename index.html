@@ -11125,7 +11125,12 @@
 
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
             } else if (event.data.includes('"event":"initialDelivery')) {
-              document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`).contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
+              const vid = document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`);
+              if (vid) {
+                if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    window.innerWidth <= 768) vid.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
+                vid.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
+              }
             }
           });
 
