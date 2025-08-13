@@ -10929,11 +10929,12 @@
             allowfullscreen>
           </iframe>
         </div>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`#${hashIndex}`">#{{ hashIndex }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`#${hashIndex}`">#{{ hashIndex }} {{ videos[hashIndex - 1].name }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
       </div>
-      <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
-        <div class="relative" style="padding-bottom: 56.25%;">
-          <iframe title="TY YouTube channel"
+      <div v-for="video in displayedVideos" :key="video.id" id="playertop" class="border rounded-lg p-1 shadow-md">
+        <div class="relative" style="padding-bottom: 56.25%;" @click="currentVideoIdx=video.index">
+          <img :src="video.thumbnail" class="absolute top-0 left-0 w-full h-full" :alt="video.name">
+          <iframe v-if="currentVideoIdx==video.index" title="TY YouTube channel"
             :id="`player-${video.id}`"
             class="absolute top-0 left-0 w-full h-full"
             :src="`${yturl}/embed/${video.id}?iv_load_policy=3&enablejsapi=1`"
@@ -10944,7 +10945,7 @@
             @load="setupPlayer(video.id)">
           </iframe>
         </div>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`#${video.index}`">#{{ video.index }}</a> 發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`#${video.index}`">#{{ video.index }} {{ video.name }}</a> 發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
         <p v-if="video.error" class="text-red-500 text-sm mt-2">
           錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
           <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
@@ -10952,8 +10953,8 @@
       </div>
     </div>
     <div v-if="hasMoreVideos" class="text-center my-4">
+      <p class="h-96 text-gray-500">正在載入更多影片...</p>
       <div ref="loadMoreTrigger" class="h-20 bg-gray-200"></div>
-      <p class="text-gray-500">正在載入更多影片...</p>
     </div>
     <div v-else-if="videos.length > 0" class="text-center text-gray-500 my-4">
       已載入所有影片
@@ -10963,13 +10964,13 @@
   <script>
     const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
     let lastScrollTop = -1;
-    let currentVideoID = null;
 
     createApp({
       setup() {
         const videos = ref([]);
         const pageSize = ref(10);
         const currentPage = ref(1);
+        const currentVideoIdx = ref(0);
         const loadMoreTrigger = ref(null);
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
@@ -11023,7 +11024,11 @@
         });
 
         const displayedVideos = computed(() => {
-          return sortedVideos.value.slice(0, pageSize.value * currentPage.value);
+          document.getElementById('playertop')?.scrollIntoView({
+            behavior: 'instant'
+          });
+
+          return sortedVideos.value.slice(pageSize.value * (currentPage.value - 1), pageSize.value * currentPage.value);
         });
 
         const hasMoreVideos = computed(() => {
@@ -11093,30 +11098,22 @@
           const loadMoreObserver = new IntersectionObserver(
             (entries) => {
               entries.forEach(entry => {
-                if (entry.isIntersecting && hasMoreVideos.value && hasMoreVideos.value) {
-                  currentPage.value++;
+                if (entry.isIntersecting) {
+                  if (hasMoreVideos.value) {
+                    currentPage.value++;
+                  } else if (currentPage.value > 1 && entry.isIntersecting) {
+                    currentPage.value--;
+                  }
                 }
               });
             },
-            { threshold: 0, rootMargin: '0px 0px 100px 0px' }
+            { threshold: 1, rootMargin: '0px 0px 10px 0px' }
           );
 
           await nextTick(); // 確保 DOM 渲染完成
 
           window.addEventListener('message', (event) => {
-            if (event.data.includes('"playerState":1')) {
-              let videoData = JSON.parse(event.data);
-              if (currentVideoID != videoData.info.videoData.video_id) {
-                currentVideoID && document.getElementById(`player-${currentVideoID}`)?.contentWindow.postMessage('{"event": "command", "func": "stopVideo"}', '*');
-                currentVideoID = videoData.info.videoData.video_id;
-              }
-              if (currentVideoID) {
-                const vid = document.getElementById(`player-${currentVideoID}`);
-                if (vid && vid.dataset.isshort == "0") {
-                  vid.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-                }
-              }
-            } else if (hashIndex.value && event.data.includes('"playerState":0')) {
+            if (hashIndex.value && event.data.includes('"playerState":0')) {
               let idx = hashIndex.value + 1;
               if (idx <= videos.value.length) {
                 hashIndex.value = idx;
@@ -11127,20 +11124,20 @@
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
 
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
+            } else if (event.data.includes('"event":"initialDelivery')) {
+              document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`).contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
             }
-          });
-
-          hashIframe.value.addEventListener('load', () => {
-            hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
           });
 
           const hashID = location.hash.slice(1);
           if (hashID != '') {
             goTo(parseInt(hashID));
             await nextTick();
+            hashIframe.value.addEventListener('load', () => {
+              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+            });
             document.getElementById('player').scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
+              behavior: 'smooth'
             });
           }
 
@@ -11153,6 +11150,7 @@
           videos,
           pageSize,
           currentPage,
+          currentVideoIdx,
           loadMoreTrigger,
           searchQuery,
           sortOrder,
