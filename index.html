@@ -11129,6 +11129,7 @@
               if (vid) {
                 if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
     window.innerWidth <= 768) vid.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
+                vid.dataset.isshort == "0" && vid.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
                 vid.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
               }
             }
