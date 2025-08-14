@@ -10890,7 +10890,7 @@
           :key="index"
           @mousedown.prevent="goTo(option.index)"
           class="px-3 py-2 hover:bg-gray-100">
-          <a class="items-center flex cursor-pointer"><img :src="option.thumbnail" :alt="option.name" class="h-5 pr-2"> {{ option.name }}</a>
+          <a class="items-center flex cursor-pointer"><img :src="option.thumbnail" :alt="option.name" class="h-5 pr-2"> <span v-text="option.name"></span></a>
         </li>
       </ul>
       <input
@@ -10900,19 +10900,24 @@
         type="text"
         placeholder="輸入影片標題搜尋..."
         class="border rounded-lg px-4 py-2 w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <select v-model="sortOrder"
-        class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
+      <select v-model="sortOrder" class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
         <option value="newest">從新到舊</option>
         <option value="oldest">從舊到新</option>
       </select>
-      <select v-model="playSpeed" @change="setupPlayer"
-        class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
+      <select v-model="playSpeed" @change="setupPlayer" class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
         <option value="0.25">0.25倍速</option>
         <option value="0.5">0.5倍速</option>
         <option value="1">正常</option>
         <option value="1.25">1.25倍速</option>
         <option value="1.5">1.5倍速</option>
         <option value="2">2倍速</option>
+      </select>
+      <select v-model="displayCol" class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
+        <option value="1">1欄</option>
+        <option value="2">2欄</option>
+        <option value="3">3欄</option>
+        <option value="4">4欄</option>
+        <option value="5">5欄</option>
       </select>
     </div>
     <div v-if="displayedVideos.length === 0" class="text-center text-gray-500">
@@ -10931,30 +10936,32 @@
         </div>
         <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`#${hashIndex}`">#{{ hashIndex }} {{ videos[hashIndex - 1].name }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
       </div>
-      <div v-for="video in displayedVideos" :key="video.id" id="playertop" class="border rounded-lg p-1 shadow-md">
-        <div class="relative" style="padding-bottom: 56.25%;" @click="currentVideoIdx=video.index">
-          <img :src="video.thumbnail" class="absolute top-0 left-0 w-full h-full" :alt="video.name">
-          <iframe v-if="currentVideoIdx==video.index" title="TY YouTube channel"
-            :id="`player-${video.id}`"
-            class="absolute top-0 left-0 w-full h-full"
-            :src="`${yturl}/embed/${video.id}?iv_load_policy=3&enablejsapi=1`"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-            :data-isshort="`${video.isShort}`"
-            @error="handleVideoError(video.id)"
-            @load="setupPlayer(video.id)">
-          </iframe>
+      <div class="grid gap-4" :class="`grid-cols-${displayCol}`">
+        <div v-for="video in displayedVideos" :key="video.id" id="playertop" class="border rounded-lg p-1 shadow-md">
+          <div class="relative" style="padding-bottom: 56.25%;" @click="currentVideoIdx=video.index">
+            <img :src="video.thumbnail" class="absolute top-0 left-0 w-full h-full" :alt="video.name">
+            <iframe v-if="currentVideoIdx==video.index" title="TY YouTube channel"
+              :id="`player-${video.id}`"
+              class="absolute top-0 left-0 w-full h-full"
+              :src="`${yturl}/embed/${video.id}?iv_load_policy=3&enablejsapi=1`"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              :data-isshort="`${video.isShort}`"
+              @error="handleVideoError(video.id)"
+              @load="setupPlayer(video.id)">
+            </iframe>
+          </div>
+          <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`#${video.index}`">#{{ video.index }} {{ video.name }}</a><br>發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
+          <p v-if="video.error" class="text-red-500 text-sm mt-2">
+            錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
+            <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
+          </p>
         </div>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`#${video.index}`">#{{ video.index }} {{ video.name }}</a> 發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
-        <p v-if="video.error" class="text-red-500 text-sm mt-2">
-          錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
-          <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
-        </p>
       </div>
     </div>
     <div v-if="hasMoreVideos" class="text-center my-4">
-      <p class="h-96 text-gray-500">正在載入更多影片...</p>
-      <div ref="loadMoreTrigger" class="h-20 bg-gray-200"></div>
+      <p class="h-96"></p>
+      <div ref="loadMoreTrigger" class="h-20 bg-gray-200">正在載入更多影片...</div>
     </div>
     <div v-else-if="videos.length > 0" class="text-center text-gray-500 my-4">
       已載入所有影片
@@ -10962,7 +10969,7 @@
   </div>
 
   <script>
-    const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
+    const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
     let lastScrollTop = -1;
 
     createApp({
@@ -10975,6 +10982,7 @@
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
         const playSpeed = ref('2');
+        const displayCol = ref('2');
         const hashIndex = ref(0);
         const hashIframe = ref(null);
         const hashVideo = ref('');
@@ -11091,6 +11099,15 @@
           }, 100)
         };
 
+        watch(displayCol, (val) => {
+          switch(val) {
+          case "3":
+          case "4":
+            pageSize.value = 12;
+            break;
+          }
+        });
+
         onMounted(async () => {
 
           loadJsonLdData();
@@ -11161,6 +11178,7 @@
           searchQuery,
           sortOrder,
           playSpeed,
+          displayCol,
           filteredVideos,
           sortedVideos,
           displayedVideos,
