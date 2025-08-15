@@ -11015,18 +11015,23 @@
 
         const filteredVideos = computed(() => {
           const sqVal = searchQuery.value.trim();
+          let isYTID;
 
-          if (/youtube.com|youtu.be/.test(sqVal)) {
-            const vidURL = new URL(sqVal);
+          if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
             let vid;
-            if (vidURL.search) {
-              const vidParams = new URLSearchParams(vidURL.search);
-              vid = vidParams.get('v');
+            if (isYTID) {
+              vid = sqVal;
             } else {
-              vid = vidURL.pathname.slice(1);
+              const vidURL = new URL(sqVal);
+              if (vidURL.search.includes('v=')) {
+                const vidParams = new URLSearchParams(vidURL.search);
+                vid = vidParams.get('v');
+              } else {
+                vid = vidURL.pathname.replace(/\/live/, '').slice(1);
+              }
             }
             hashVideo.value = `https://www.youtube.com/embed/${vid}?iv_load_policy=3&enablejsapi=1`;
-            hashIframe.value.addEventListener('load', () => {
+            hashIframe.value?.addEventListener('load', () => {
               hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
             });
             return;
@@ -11098,13 +11103,16 @@
           if (hashNum && hashNum > 0 && hashNum <= videos.value.length) {
             hashIndex.value = parseInt(hashNum);
             hashVideo.value = `${yturl.value}/embed/${videos.value[hashIndex.value - 1].id}?iv_load_policy=3&enablejsapi=1`;
+            hashIframe.value?.addEventListener('load', () => {
+              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+            });
           }
         };
 
         const doDropdown = () => {
           showDropdown.value = 1;
           setTimeout(() => {
-            if (lastScrollTop == -1) {
+            if (lastScrollTop == -1 && dropdownRef.value) {
               dropdownRef.value.scrollTop = dropdownRef.value.scrollHeight;
             } else if (dropdownRef.value) {
               dropdownRef.value.scrollTop = lastScrollTop;
