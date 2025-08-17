@@ -11065,7 +11065,8 @@
         v-model="searchQuery"
         @click="doDropdown"
         @blur="hideWithDelay"
-        type="text"
+        type="search"
+        oninput="if (this.value.length == 0) localStorage.removeItem('keyword')"
         placeholder="輸入影片標題搜尋..."
         class="border rounded-lg px-4 py-2 w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       <select v-model="sortOrder" class="border rounded-lg px-4 py-2 w-full sm:w-1/4">
@@ -11184,6 +11185,8 @@
         const filteredVideos = computed(() => {
           const sqVal = searchQuery.value.trim();
           let isYTID;
+
+          if (sqVal.length > 2) localStorage.setItem('keyword', sqVal);
 
           if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
             let vid;
@@ -11307,6 +11310,7 @@
         });
 
         onMounted(async () => {
+          const keyword = localStorage.getItem('keyword');
 
           loadJsonLdData();
 
@@ -11359,6 +11363,8 @@
               behavior: 'smooth'
             });
           }
+
+          if (keyword) searchQuery.value = keyword;
 
           if (loadMoreTrigger.value) {
             loadMoreObserver.observe(loadMoreTrigger.value);
