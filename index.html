@@ -11272,15 +11272,16 @@
         };
 
         const setupPlayer = (id) => {
-          var iframes = [];
+          var iframe;
           if (typeof id == "string") {
-            iframes.push(document.getElementById(`player-${id}`));
-          } else {
-            iframes = document.querySelectorAll('iframe[data-isshort="0"]');
+            iframe = document.getElementById(`player-${id}`);
+          } else if (currentVideoIdx.value) {
+            iframe = document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`);
           }
-          iframes.forEach(iframe => {
+          if (iframe) {
             iframe.contentWindow.postMessage('{"event": "listening"}', '*');
-          });
+            iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
+          }
         };
 
         const goTo = (hashNum) => {
