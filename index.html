@@ -11232,6 +11232,7 @@
             hashIframe.value?.addEventListener('load', () => {
               hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
             });
+            hashIndex.value = 0;
             return;
           }
 
