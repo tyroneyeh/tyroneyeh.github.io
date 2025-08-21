@@ -11280,10 +11280,12 @@
             hashVideo.value = null;
           } else if (currentVideoIdx.value) {
             iframe = document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`);
+          } else if (hashIframe.value) {
+            iframe = hashIframe.value;
           }
           if (iframe) {
             iframe.contentWindow.postMessage('{"event": "listening"}', '*');
-            if (iframe.dataset.isshort == '0') iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
+            if (iframe.dataset.isshort == '0' || iframe.dataset.isshort == undefined) iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
           }
         };
 
