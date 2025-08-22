@@ -11228,18 +11228,26 @@
         function getYouTubeId(url) {
           try {
             const u = new URL(url);
+            var rets = {};
+
+            if (u.searchParams.has('t')) {
+              rets['t'] = u.searchParams.get('t');
+            }
 
             if (u.pathname === '/watch' && u.searchParams.has('v')) {
-              return u.searchParams.get('v');
+              rets['v'] = u.searchParams.get('v');
+              return rets;
             }
 
             if (u.hostname === 'youtu.be') {
-              return u.pathname.slice(1);
+              rets['v'] = u.pathname.slice(1);
+              return rets;
             }
 
-            const match = u.pathname.match(/^\/(shorts|live)\/([^/?#]+)/);
+            const match = u.pathname.match(/^\/(shorts|live|video)\/([^/?#]+)/);
             if (match) {
-              return match[2];
+              rets['v'] = match[2];
+              return rets;
             }
 
             return null;
@@ -11255,8 +11263,9 @@
           if (sqVal.length > 2) localStorage.setItem('keyword', sqVal);
 
           if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
-            const vid = isYTID ? sqVal : getYouTubeId(sqVal);
-            hashVideo.value = `https://www.youtube.com/embed/${vid}?iv_load_policy=3&enablejsapi=1`;
+            const ytURL = getYouTubeId(sqVal);
+            const vid = isYTID ? sqVal : ytURL.v;
+            hashVideo.value = `https://www.youtube.com/embed/${vid}?iv_load_policy=3&enablejsapi=1` + (ytURL.t ? `&start=${ytURL.t}` : '');
             hashIframe.value?.addEventListener('load', () => {
               hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
             });
