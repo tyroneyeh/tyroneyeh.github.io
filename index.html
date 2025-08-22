@@ -11225,13 +11225,28 @@
           }
         };
 
+        function parseYouTubeTime(t) {
+          if (!t) return 0;
+          if (/^\d+$/.test(t)) return parseInt(t, 10);
+
+          let totalSeconds = 0;
+          const match = t.match(/(\d+h)?(\d+m)?(\d+s)?/);
+
+          if (match) {
+            if (match[1]) totalSeconds += parseInt(match[1], 10) * 3600;
+            if (match[2]) totalSeconds += parseInt(match[2], 10) * 60;
+            if (match[3]) totalSeconds += parseInt(match[3], 10);
+          }
+          return totalSeconds;
+        }
+
         function getYouTubeId(url) {
           try {
             const u = new URL(url);
             var rets = {};
 
             if (u.searchParams.has('t')) {
-              rets['t'] = u.searchParams.get('t');
+              rets['t'] = parseYouTubeTime(u.searchParams.get('t'));
             }
 
             if (u.pathname === '/watch' && u.searchParams.has('v')) {
