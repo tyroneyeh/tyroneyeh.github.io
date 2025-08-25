@@ -11215,24 +11215,14 @@
             allowfullscreen>
           </iframe>
         </div>
-        <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`?${startPos[currentVideoIdx]}#${hashIndex}`">#{{ hashIndex }} {{ videos[hashIndex - 1].name }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
+        <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`?${startPos}#${hashIndex}`">#{{ hashIndex }} {{ videos[hashIndex - 1].name }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
       </div>
       <div class="grid gap-4" :class="`grid-cols-${displayCol}`" id="playertop">
         <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
-          <div class="relative" style="padding-bottom: 56.25%;" @click="currentVideoIdx=video.index">
+          <div class="relative" style="padding-bottom: 56.25%;" @click="goTo(video.index)">
             <img :src="video.thumbnail" class="absolute top-0 left-0 w-full h-full" :alt="video.name">
-            <iframe v-if="currentVideoIdx==video.index" title="TY YouTube channel"
-              :id="`player-${video.id}`"
-              class="absolute top-0 left-0 w-full h-full"
-              :src="`${yturl}/embed/${video.id}?iv_load_policy=3&enablejsapi=1`"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-              :data-isshort="`${video.isShort}`"
-              @error="handleVideoError(video.id)"
-              @load="setupPlayer(video.id)">
-            </iframe>
           </div>
-          <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`?${startPos[currentVideoIdx]}#${video.index}`">#{{ video.index }} {{ video.name }}</a><br>發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
+          <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`?#${video.index}`">#{{ video.index }} {{ video.name }}</a><br>發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
           <p v-if="video.error" class="text-red-500 text-sm mt-2">
             錯誤：影片無法播放 (ID: {{ video.id }})，可能因版權問題、地理限制或已移除
             <br>請嘗試使用 VPN 或<a :href="video.url" target="_blank" class="underline text-blue-500">在 YouTube 觀看</a>
@@ -11250,7 +11240,7 @@
   </div>
 
   <script>
-    const { createApp, ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
+    const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
     let lastScrollTop = -1;
 
@@ -11259,7 +11249,6 @@
         const videos = ref([]);
         const pageSize = ref(10);
         const currentPage = ref(1);
-        const currentVideoIdx = ref(0);
         const loadMoreTrigger = ref(null);
         const searchQuery = ref('');
         const sortOrder = ref('newest'); // 預設從新到舊
@@ -11270,7 +11259,7 @@
         const hashVideo = ref('');
         const showDropdown = ref(0);
         const dropdownRef = ref(null);
-        const startPos = reactive([]);
+        const startPos = ref(null);
 
         const yturl = ref('https://www.youtube.com');
 
@@ -11407,20 +11396,10 @@
           }
         };
 
-        const setupPlayer = (id) => {
-          var iframe;
-          if (typeof id == "string") {
-            iframe = document.getElementById(`player-${id}`);
-            hashIndex.value = 0;
-            hashVideo.value = null;
-          } else if (currentVideoIdx.value) {
-            iframe = document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`);
-          } else if (hashIframe.value) {
-            iframe = hashIframe.value;
-          }
-          if (iframe) {
-            iframe.contentWindow.postMessage('{"event": "listening"}', '*');
-            if (iframe.dataset.isshort == '0' || iframe.dataset.isshort == undefined) iframe.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
+        const setupPlayer = () => {
+          if (hashIframe.value) {
+            hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+            if (hashIframe.value.dataset.isshort == '0' || hashIframe.value.dataset.isshort == undefined) hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
           }
         };
 
@@ -11501,16 +11480,12 @@
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
-            } else if (event.data.includes('"event":"initialDelivery') && currentVideoIdx.value > 0) {
-              const vid = document.getElementById(`player-${videos.value[currentVideoIdx.value - 1].id}`);
-              if (vid) {
-                if (isMobile) vid.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
-                vid.dataset.isshort == "0" && vid.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-                vid.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
-              }
+              document.getElementById('player').scrollIntoView({
+                behavior: 'smooth'
+              });
             } else if (event.data.includes('"currentTime"')) {
               let data = JSON.parse(event.data);
-              startPos[currentVideoIdx.value] = `start=${parseInt(data.info.currentTime)}`;
+              startPos.value = `start=${parseInt(data.info.currentTime)}`;
             }
           });
 
@@ -11537,7 +11512,6 @@
           videos,
           pageSize,
           currentPage,
-          currentVideoIdx,
           loadMoreTrigger,
           searchQuery,
           sortOrder,
