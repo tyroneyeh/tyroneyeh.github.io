@@ -11350,7 +11350,7 @@
           if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
             const ytURL = getYouTubeId(sqVal);
             const vid = isYTID ? sqVal : ytURL.v;
-            hashVideo.value = `https://www.youtube.com/embed/${vid}?iv_load_policy=3&enablejsapi=1` + (ytURL.t ? `&start=${ytURL.t}` : '');
+            hashVideo.value = `https://www.youtube.com/embed/${vid}?iv_load_policy=3&enablejsapi=1` + (ytURL?.t ? `&start=${ytURL.t}` : '');
             hashIframe.value?.addEventListener('load', () => {
               hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
             });
