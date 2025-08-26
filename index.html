@@ -11347,29 +11347,28 @@
             var rets = {};
 
             if (u.searchParams.has('t')) {
-              rets['t'] = parseYouTubeTime(u.searchParams.get('t'));
+              rets.t = parseYouTubeTime(u.searchParams.get('t'));
             }
 
             if (u.pathname === '/watch' && u.searchParams.has('v')) {
-              rets['v'] = u.searchParams.get('v');
+              rets.v = u.searchParams.get('v');
               return rets;
             }
 
             if (u.hostname === 'youtu.be') {
-              rets['v'] = u.pathname.slice(1);
+              rets.v = u.pathname.slice(1);
               return rets;
             }
 
             const match = u.pathname.match(/^\/(shorts|live|video)\/([^/?#]+)/);
             if (match) {
-              rets['v'] = match[2];
+              rets.v = match[2];
               return rets;
             }
 
-            return null;
           } catch (e) {
-            return null;
           }
+          return null;
         }
 
         const filteredVideos = computed(() => {
