@@ -11558,7 +11558,7 @@
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
               if (isMobile) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
-              isPiPSupported.value && document.getElementById('player').scrollIntoView({
+              document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
               });
             } else if (event.data.includes('"currentTime"')) {
