@@ -11493,15 +11493,15 @@
                     width: player.clientWidth,
                     height: player.clientHeight
                 });
-                pipWindow.document.body.style.margin = '0';
-                pipWindow.document.body.style.padding = '0';
+                pipWindow.document.body.style.margin = 0;
+                pipWindow.document.body.style.padding = 0;
                 pipWindow.document.body.style.overflow = 'hidden';
 
                 player.style.width = '100vw';
                 player.style.height = '100vh';
                 player.style.border = 'none';
-                player.style.margin = '0';
-                player.style.padding = '0';
+                player.style.margin = 0;
+                player.style.padding = 0;
                 pipWindow.document.body.append(player);
                 pipWindow.addEventListener('unload', () => {
                     playerContainer.append(player);
