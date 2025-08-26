@@ -11242,7 +11242,7 @@
         <option value="4">4欄</option>
         <option value="5">5欄</option>
       </select>
-      <input type="button" @click="startPiP" :class="[
+      <input type="button" v-if="isPiPSupported" @click="startPiP" :class="[
       'px-4 py-2 rounded font-bold transition-colors',
       !isPiPSupported
         ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -11308,7 +11308,7 @@
         const showDropdown = ref(0);
         const dropdownRef = ref(null);
         const startPos = ref(null);
-        const isPiPSupported = ref(0);
+        const isPiPSupported = ref('documentPictureInPicture' in window);
 
         const yturl = ref('https://www.youtube.com');
 
