@@ -11486,6 +11486,7 @@
         };
 
         const startPiP = async () => {
+          const playerContainer = document.querySelector('#player .relative');
           const player = document.querySelector('#player iframe');
           try {
                 const pipWindow = await documentPictureInPicture.requestWindow({
@@ -11493,8 +11494,10 @@
                     height: player.clientHeight
                 });
                 pipWindow.document.body.append(player);
+                pipWindow.addEventListener('unload', () => {
+                    playerContainer.append(player);
+                });
           } catch (e) {
-
           }
         };
 
