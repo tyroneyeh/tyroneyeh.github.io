@@ -11154,6 +11154,48 @@
         "thumbnailUrl": "https://i.ytimg.com/vi/fHytZCpqsdY/hqdefault.jpg",
         "isShort": 0
       }
+    },
+    {
+      "@type": "ListItem",
+      "position": 797,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20250824新竹寶二水庫溢洪道2",
+        "description": "無描述",
+        "uploadDate": "2025-08-24T01:14:46Z",
+        "url": "https://youtube.com/watch?v=nvmuQXv2QW4",
+        "embedUrl": "https://www.youtube.com/embed/nvmuQXv2QW4",
+        "thumbnailUrl": "https://i.ytimg.com/vi/nvmuQXv2QW4/hqdefault.jpg",
+        "isShort": 1
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 798,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20250225營火",
+        "description": "無描述",
+        "uploadDate": "2025-08-24T01:15:46Z",
+        "url": "https://youtube.com/watch?v=7S6i7V8ayPo",
+        "embedUrl": "https://www.youtube.com/embed/7S6i7V8ayPo",
+        "thumbnailUrl": "https://i.ytimg.com/vi/7S6i7V8ayPo/hqdefault.jpg",
+        "isShort": 1
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 799,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20250826台鐵1次自強號(環島之星)",
+        "description": "無描述",
+        "uploadDate": "2025-08-24T01:16:46Z",
+        "url": "https://youtube.com/watch?v=jxbqeXwEVtw",
+        "embedUrl": "https://www.youtube.com/embed/jxbqeXwEVtw",
+        "thumbnailUrl": "https://i.ytimg.com/vi/jxbqeXwEVtw/hqdefault.jpg",
+        "isShort": 1
+      }
     }
   ]
 }
@@ -11479,6 +11521,7 @@
             } else if ((hashIndex.value > 0 || hashVideo.value) && event.data.includes('"event":"onReady"')) {
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
+              if (isMobile) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
               document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
