@@ -11577,6 +11577,8 @@
             document.getElementById('player').scrollIntoView({
               behavior: 'smooth'
             });
+          } else {
+            goTo(videos.value.length);
           }
 
           if (keyword) searchQuery.value = keyword;
