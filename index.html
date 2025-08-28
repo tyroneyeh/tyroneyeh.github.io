@@ -11456,7 +11456,10 @@
           showDropdown.value = 0;
           if (hashNum && hashNum > 0 && hashNum <= videos.value.length) {
             hashIndex.value = parseInt(hashNum);
-            const start = new URLSearchParams(location.search).get('start');
+            let start = new URLSearchParams(location.search).get('start');
+            if (!start) {
+              start = localStorage.getItem(`${videos.value[hashIndex.value - 1].id}-start`);
+            }
             hashVideo.value = `${yturl.value}/embed/${videos.value[hashIndex.value - 1].id}?iv_load_policy=3&enablejsapi=1`+ (start ? `&start=${start}` : '');
             hashIframe.value?.addEventListener('load', () => {
               hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
@@ -11548,7 +11551,8 @@
 
           window.addEventListener('message', (event) => {
             if (hashIndex.value && event.data.includes('"playerState":0')) {
-              let idx = hashIndex.value + 1;
+              localStorage.removeItem(`${videos.value[hashIndex.value - 1].id}-start`);
+              const idx = hashIndex.value + 1;
               if (idx <= videos.value.length) {
                 hashIndex.value = idx;
                 hashVideo.value = `${yturl.value}/embed/${videos.value[hashIndex.value - 1].id}?iv_load_policy=3&enablejsapi=1`;
@@ -11562,8 +11566,12 @@
                 behavior: 'smooth'
               });
             } else if (event.data.includes('"currentTime"')) {
-              let data = JSON.parse(event.data);
-              startPos.value = `start=${parseInt(data.info.currentTime)}`;
+              const data = JSON.parse(event.data);
+              const currentTime = parseInt(data.info.currentTime);
+              startPos.value = `start=${currentTime}`;
+              if (currentTime && currentTime % 10 == 0) {
+                localStorage.setItem(`${videos.value[hashIndex.value - 1].id}-start`, currentTime);
+              }
             }
           });
 
