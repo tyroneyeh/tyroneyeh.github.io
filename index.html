@@ -11252,6 +11252,20 @@
         "thumbnailUrl": "https://i.ytimg.com/vi/-1YORXDhNvk/hqdefault.jpg",
         "isShort": 1
       }
+    },
+    {
+      "@type": "ListItem",
+      "position": 804,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20250901台鐵1次自強號(環島之星)",
+        "description": "無描述",
+        "uploadDate": "2025-09-01T01:01:01Z",
+        "url": "https://youtube.com/watch?v=2e95nAbHMF4",
+        "embedUrl": "https://www.youtube.com/embed/2e95nAbHMF4",
+        "thumbnailUrl": "https://i.ytimg.com/vi/2e95nAbHMF4/hqdefault.jpg",
+        "isShort": 1
+      }
     }
   ]
 }
@@ -11406,7 +11420,7 @@
 
         function getYouTubeId(url) {
           try {
-            const u = new URL(url);
+            const u = new URL(url.startsWith('http') ? url : 'https://'+ url);
             var rets = {};
 
             if (u.searchParams.has('t')) {
@@ -11442,7 +11456,7 @@
 
           if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
             const ytURL = getYouTubeId(sqVal);
-            window.vid = isYTID ? sqVal : ytURL.v;
+            window.vid = isYTID ? sqVal : ytURL?.v;
             let start = ytURL?.t || localStorage.getItem(`${vid}-start`);
             hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1&start=${start}`;
             hashIframe.value?.addEventListener('load', () => {
