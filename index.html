@@ -11553,7 +11553,6 @@
         };
 
         const goTo = (hashNum) => {
-          showDropdown.value = 0;
           if (hashNum && hashNum > 0 && hashNum <= videos.value.length) {
             hashIndex.value = parseInt(hashNum);
             window.vid = videos.value[hashIndex.value - 1].id;
@@ -11585,9 +11584,6 @@
           if (dropdownRef.value) {
             lastScrollTop = dropdownRef.value.scrollTop;
           }
-          setTimeout(() => {
-            showDropdown.value = 0;
-          }, 100)
         };
 
         const startPiP = async () => {
@@ -11663,6 +11659,7 @@
                 }
               }
             } else if ((hashIndex.value > 0 || hashVideo.value) && event.data.includes('"event":"onReady"')) {
+              showDropdown.value = 0;
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
               if (isMobile) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
