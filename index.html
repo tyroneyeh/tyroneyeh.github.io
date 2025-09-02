@@ -11654,7 +11654,7 @@
                 const idx = hashIndex.value + 1;
                 if (idx <= videos.value.length) {
                   hashIndex.value = idx;
-                  window.vid = videos.value[hashIndex.value - 1];
+                  window.vid = videos.value[hashIndex.value - 1].id;
                   hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1`;
                 }
               }
