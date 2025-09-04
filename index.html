@@ -11639,6 +11639,7 @@
         const hideWithDelay = () => {
           if (dropdownRef.value) {
             lastScrollTop = dropdownRef.value.scrollTop;
+            setTimeout(() => showDropdown.value = 0, 100);
           }
         };
 
