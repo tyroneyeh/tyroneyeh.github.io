@@ -12340,6 +12340,7 @@
         ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
         : 'bg-blue-500 text-white hover:bg-blue-600'
       ]" value="子母畫面">
+      <input type="button" @click="unMute" value="取消靜音">
     </div>
     <div v-if="displayedVideos && displayedVideos.length == 0" class="text-center text-gray-500">
       無符合條件的影片
@@ -12608,6 +12609,10 @@
           }
         };
 
+        const unMute = () => {
+          hashIframe.value?.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
+        };
+
         watch(displayCol, (val) => {
           switch(val) {
           case "3":
@@ -12657,7 +12662,7 @@
               showDropdown.value = 0;
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-              if (isMobile) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
+              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
               document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
@@ -12725,7 +12730,8 @@
           dropdownRef,
           startPos,
           isPiPSupported,
-          startPiP
+          startPiP,
+          unMute
         };
       }
     }).mount('#app');
