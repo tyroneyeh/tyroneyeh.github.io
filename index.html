@@ -12661,7 +12661,7 @@
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
               if (isMobile) setTimeout(() => {
                 hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
-              }, 500);
+              }, 1000);
               document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
               });
