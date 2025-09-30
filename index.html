@@ -12659,10 +12659,6 @@
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
               if (isMobile) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
-              if (isMobile) setTimeout(() => {
-                hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
-                hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
-              }, 1000);
               document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
               });
