@@ -13254,6 +13254,76 @@
         "thumbnailUrl": "https://i.ytimg.com/vi/c2rCv6gzQnM/hqdefault.jpg",
         "isShort": 1
       }
+    },
+    {
+      "@type": "ListItem",
+      "position": 947,
+      "item": {
+        "@type": "VideoObject",
+        "name": "TY SeatingChart 線上座位表用電腦瀏覽器操作教學",
+        "description": "TY的座位表產生器網址 https://tyroneyeh.github.io/SeatingChart/",
+        "uploadDate": "2025-10-27T00:00:32Z",
+        "url": "https://www.youtube.com/watch?v=KV6hLE6TZHI",
+        "embedUrl": "https://www.youtube.com/embed/KV6hLE6TZHI",
+        "thumbnailUrl": "https://i.ytimg.com/vi/KV6hLE6TZHI/hqdefault.jpg",
+        "isShort": 0
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 948,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20251027台鐵521次莒光號",
+        "description": "無描述",
+        "uploadDate": "2025-10-27T09:49:01Z",
+        "url": "https://www.youtube.com/watch?v=hwU20EaoKRE",
+        "embedUrl": "https://www.youtube.com/embed/hwU20EaoKRE",
+        "thumbnailUrl": "https://i.ytimg.com/vi/hwU20EaoKRE/hqdefault.jpg",
+        "isShort": 1
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 949,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20251029台鐵521次莒光號",
+        "description": "無描述",
+        "uploadDate": "2025-10-29T09:43:06Z",
+        "url": "https://www.youtube.com/watch?v=l_A9I2wKRPw",
+        "embedUrl": "https://www.youtube.com/embed/l_A9I2wKRPw",
+        "thumbnailUrl": "https://i.ytimg.com/vi/l_A9I2wKRPw/hqdefault.jpg",
+        "isShort": 1
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 950,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20251029竹北中正東路至光明六路東一段",
+        "description": "#euc #bike #cycling #travel #taiwan",
+        "uploadDate": "2025-10-29T12:38:19Z",
+        "url": "https://www.youtube.com/watch?v=Ks0jg82Tb1U",
+        "embedUrl": "https://www.youtube.com/embed/Ks0jg82Tb1U",
+        "thumbnailUrl": "https://i.ytimg.com/vi/Ks0jg82Tb1U/hqdefault.jpg",
+        "isShort": 0
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 951,
+      "item": {
+        "@type": "VideoObject",
+        "name": "20251029竹北光明六路東一段至竹北車站",
+        "description": "#euc #bike #cycling #travel #taiwan",
+        "uploadDate": "2025-10-29T22:00:54Z",
+        "url": "https://www.youtube.com/watch?v=j6_-U5N6XFc",
+        "embedUrl": "https://www.youtube.com/embed/j6_-U5N6XFc",
+        "thumbnailUrl": "https://i.ytimg.com/vi/j6_-U5N6XFc/hqdefault.jpg",
+        "isShort": 0
+      }
     }
   ]
 }
@@ -13323,6 +13393,14 @@
         </div>
         <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`?${startPos}#${hashIndex}`">#{{ hashIndex }} {{ videos[hashIndex - 1].name }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
         <div class="flex flex-col"><input type="button" class="text-white bg-blue-700" @click="unMute" value="取消靜音"></div>
+      </div>
+      <div class="flex justify-end">
+        <a href="https://github.com/tyroneyeh/tyroneyeh.github.io/" target="_blank" class="flex">
+          <img src="https://img.shields.io/github/stars/tyroneyeh/tyroneyeh.github.io" alt="GitHub stars" />
+          <img src="https://img.shields.io/github/last-commit/tyroneyeh/tyroneyeh.github.io" alt="GitHub last commit" />
+          <img src="https://badgen.net/github/commits/tyroneyeh/tyroneyeh.github.io" alt="GitHub last commit" />
+          <img src="https://data.jsdelivr.com/v1/package/gh/tyroneyeh/tyroneyeh.github.io/badge?style=rounded" alt="JSDelivr CDN" />
+        </a>
       </div>
       <div class="grid gap-4" :class="{'grid-cols-1': displayCol == 1, 'grid-cols-2': displayCol == 2, 'grid-cols-3': displayCol == 3, 'grid-cols-4': displayCol == 4, 'grid-cols-5': displayCol == 5}" id="playertop">
         <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
