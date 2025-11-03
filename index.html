@@ -13642,7 +13642,7 @@
       </div>
       <div class="grid gap-4" :class="{'grid-cols-1': displayCol == 1, 'grid-cols-2': displayCol == 2, 'grid-cols-3': displayCol == 3, 'grid-cols-4': displayCol == 4, 'grid-cols-5': displayCol == 5}" id="playertop">
         <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
-          <div class="relative" style="padding-bottom: 56.25%;" @click="goTo(video.index)">
+          <div class="relative" style="padding-bottom: 56.25%;" @click="goTo(video.index, 1)">
             <img :src="video.thumbnail" class="absolute top-0 left-0 w-full h-full" :alt="video.name">
           </div>
           <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`?#${video.index}`">#{{ video.index }} {{ video.name }}</a><br>發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
@@ -13829,7 +13829,7 @@
           }
         };
 
-        const goTo = (hashNum) => {
+        const goTo = (hashNum, fromClick) => {
           if (hashNum && hashNum > 0 && hashNum <= videos.value.length) {
             hashIndex.value = parseInt(hashNum);
             window.vid = videos.value[hashIndex.value - 1].id;
@@ -13837,6 +13837,7 @@
             if (!start) {
               start = localStorage.getItem(`${vid}-start`);
             }
+            window.fromClick = fromClick;
             hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1`+ (start ? `&start=${start}` : '');
             hashIframe.value?.addEventListener('load', () => {
               hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
@@ -13945,8 +13946,12 @@
               showDropdown.value = 0;
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
+              if (!window.fromClick) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
+              if (window.fromClick) {
+                window.fromClick = false;
+                hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
+              }
               document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
               });
