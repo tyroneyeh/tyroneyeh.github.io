@@ -13576,7 +13576,7 @@
         class="absolute z-10 w-full bg-white border border-gray-300 rounded shadow max-h-52 mt-11 overflow-y-auto">
         <li v-for="option in filteredVideos"
           :key="index"
-          @mousedown.prevent="goTo(option.index)"
+          @mousedown.prevent="goTo(option.index, 1)"
           class="px-3 py-2 hover:bg-gray-100">
           <a class="items-center flex cursor-pointer"><img :src="option.thumbnail" :alt="option.name" class="h-5 pr-2"> <span v-text="option.name"></span></a>
         </li>
