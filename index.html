@@ -15122,7 +15122,7 @@
               showDropdown.value = 0;
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-              if (!window.fromClick) hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
+              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
               hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
               if (window.fromClick) {
                 window.fromClick = false;
