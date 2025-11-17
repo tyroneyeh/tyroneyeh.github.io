@@ -15008,6 +15008,7 @@
         <option value="4">4欄</option>
         <option value="5">5欄</option>
       </select>
+      <label class="whitespace-nowrap"><input type="checkbox" v-model="autoNext"> 自動</label>
       <input type="button" v-if="isPiPSupported" @click="startPiP" :class="[
       'px-4 py-2 rounded font-bold transition-colors',
       !isPiPSupported
@@ -15020,7 +15021,7 @@
     </div>
     <div v-else class="flex flex-col gap-4">
       <div id="player" class="border rounded-lg p-1 shadow-md resize overflow-auto" v-show="hashIndex || hashVideo">
-        <div class="relative" style="padding-bottom: 56.25%;">
+        <div class="relative" style="padding-bottom:56.25%">
           <iframe title="TY YouTube channel"
             class="absolute top-0 left-0 w-full h-full"
             ref="hashIframe"
@@ -15040,7 +15041,7 @@
       </div>
       <div class="grid gap-4" :class="{'grid-cols-1': displayCol == 1, 'grid-cols-2': displayCol == 2, 'grid-cols-3': displayCol == 3, 'grid-cols-4': displayCol == 4, 'grid-cols-5': displayCol == 5}" id="playertop">
         <div v-for="video in displayedVideos" :key="video.id" class="border rounded-lg p-1 shadow-md">
-          <div class="relative" style="padding-bottom: 56.25%;" @click="goTo(video.index, 1)">
+          <div class="relative" style="padding-bottom:56.25%" @click="goTo(video.index, 1)">
             <img :src="video.thumbnail" class="absolute top-0 left-0 w-full h-full" :alt="video.name">
           </div>
           <p class="text-sm text-gray-600 mb-2 line-clamp-2"><a :href="`?#${video.index}`">#{{ video.index }} {{ video.name }}</a><br>發布日期: {{ formatDate(video.publishedAt) }} {{ video.description }}</p>
@@ -15082,6 +15083,7 @@
         const dropdownRef = ref(null);
         const startPos = ref(null);
         const isPiPSupported = ref('documentPictureInPicture' in window);
+        const autoNext = ref(true);
 
         const yturl = ref('https://www.youtube.com');
 
@@ -15334,7 +15336,7 @@
               if (hashIndex.value) {
                 localStorage.removeItem(`${vid}-start`);
                 const idx = hashIndex.value + 1;
-                if (idx <= videos.value.length) {
+                if (autoNext.value && idx <= videos.value.length) {
                   hashIndex.value = idx;
                   window.vid = videos.value[hashIndex.value - 1].id;
                   hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1`;
@@ -15417,7 +15419,8 @@
           startPos,
           isPiPSupported,
           startPiP,
-          unMute
+          unMute,
+          autoNext
         };
       }
     }).mount('#app');
