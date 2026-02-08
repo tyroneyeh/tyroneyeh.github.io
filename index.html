@@ -18874,7 +18874,7 @@
             let start = ytURL?.t || localStorage.getItem(`${vid}-start`);
             hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1&start=${start}`;
             hashIframe.value?.addEventListener('load', () => {
-              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
               location.hash = vid + (ytURL?.t ? ytURL.t : '');
             });
             hashIndex.value = 0;
@@ -18933,7 +18933,7 @@
 
         const setupPlayer = () => {
           if (hashIframe.value) {
-            hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+            hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
             if (hashIframe.value.dataset.isshort == '0' || hashIframe.value.dataset.isshort == undefined) hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
           }
         };
@@ -18949,7 +18949,7 @@
             window.fromClick = fromClick;
             hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1`+ (start ? `&start=${start}` : '');
             hashIframe.value?.addEventListener('load', () => {
-              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
               isPiPSupported.value = hashIframe.value && 'documentPictureInPicture' in window;
               hashIndex.value && (location.hash = hashIndex.value);
             });
@@ -19002,12 +19002,24 @@
           }
         };
 
-        const unMute = () => {
-          hashIframe.value?.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
+        const unMute = async() => {
+          hashIframe.value?.contentWindow?.postMessage('{"event": "command", "func": "unMute"}', yturl.value);
           const wrap = document.querySelector('#player .relative');
-          if (wrap) {
-            wrap?.requestFullscreen() || wrap?.webkitRequestFullscreen() || wrap?.mozRequestFullScreen() || wrap?.msRequestFullscreen();
+          if (!wrap) return;
+          try {
+            if (wrap.requestFullscreen) {
+              await wrap.requestFullscreen();
+            } else if (wrap.webkitRequestFullscreen) {
+              wrap.webkitRequestFullscreen(); // Safari
+            } else if (wrap.mozRequestFullScreen) {
+              wrap.mozRequestFullScreen(); // old Firefox
+            } else if (wrap.msRequestFullscreen) {
+              wrap.msRequestFullscreen(); // old IE/Edge
+            }
+          } catch (err) {
+            console.warn("Fullscreen failed:", err);
           }
+
         };
 
         watch(displayCol, (val) => {
@@ -19059,11 +19071,11 @@
               showDropdown.value = 0;
               if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
               hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', '*');
-              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', '*');
+              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', yturl.value);
+              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', yturl.value);
               if (window.fromClick) {
                 window.fromClick = false;
-                !isMobile && hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
+                !isMobile && hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "unMute"}', yturl.value);
               }
               document.getElementById('player').scrollIntoView({
                 behavior: 'smooth'
@@ -19088,7 +19100,7 @@
               goTo(parseInt(hashID));
             await nextTick();
             hashIframe.value.addEventListener('load', () => {
-              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', '*');
+              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
             });
             document.getElementById('player').scrollIntoView({
               behavior: 'smooth'
