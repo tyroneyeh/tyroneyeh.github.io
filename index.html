@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>TY的生活紀錄 TY's Life in Taiwan - YouTube 影片播放器</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet">
@@ -18817,7 +18819,7 @@
           }
         };
 
-        function parseYouTubeTime(t) {
+        const parseYouTubeTime = (t) => {
           if (!t) return 0;
           if (/^\d+$/.test(t)) return parseInt(t, 10);
 
@@ -18857,9 +18859,16 @@
               return rets;
             }
 
-          } catch (e) {
+          } catch (err) {
+            console.error('解析 YouTube URL 失敗:', err);
           }
           return null;
+        }
+
+        function parseIframeSrc(iframe) {
+          const template = document.createElement('template');
+          template.innerHTML = iframe;
+          return template.content.querySelector('iframe').src;
         }
 
         const filteredVideos = computed(() => {
@@ -18879,6 +18888,10 @@
             });
             hashIndex.value = 0;
             isPiPSupported.value = hashIframe.value && 'documentPictureInPicture' in window;
+            return videos.value;
+          } else if (/iframe/.test(sqVal)) {
+            const src = parseIframeSrc(sqVal);
+            hashVideo.value = src;
             return videos.value;
           }
 
@@ -18979,10 +18992,10 @@
           const playerContainer = document.querySelector('#player .relative');
           const player = document.querySelector('#player iframe');
           try {
-                const pipWindow = await documentPictureInPicture.requestWindow({
+            const pipWindow = await documentPictureInPicture.requestWindow({
                     width: player.clientWidth,
                     height: player.clientHeight
-                });
+            });
                 pipWindow.document.body.style.margin = 0;
                 pipWindow.document.body.style.padding = 0;
                 pipWindow.document.body.style.overflow = 'hidden';
