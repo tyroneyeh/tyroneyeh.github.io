@@ -19004,6 +19004,10 @@
 
         const unMute = () => {
           hashIframe.value?.contentWindow.postMessage('{"event": "command", "func": "unMute"}', '*');
+          const wrap = document.querySelector('#player .relative');
+          if (wrap) {
+            wrap?.requestFullscreen() || wrap?.webkitRequestFullscreen() || wrap?.mozRequestFullScreen() || wrap?.msRequestFullscreen();
+          }
         };
 
         watch(displayCol, (val) => {
