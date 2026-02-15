@@ -19025,396 +19025,393 @@
     </div>
   </div>
 
-  <script>
-    const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
-    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-    let lastScrollTop = -1;
+<script>
+const { createApp } = Vue;
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+let lastScrollTop = -1;
 
-    createApp({
-      setup() {
-        const videos = ref([]);
-        const pageSize = ref(10);
-        const currentPage = ref(1);
-        const loadMoreTrigger = ref(null);
-        const searchQuery = ref('');
-        const sortOrder = ref('newest'); // 預設從新到舊
-        const playSpeed = ref('2');
-        const displayCol = ref(isMobile ? '1' : '2');
-        const hashIndex = ref(0);
-        const hashIframe = ref(null);
-        const hashVideo = ref('');
-        const showDropdown = ref(0);
-        const dropdownRef = ref(null);
-        const startPos = ref(null);
-        const isPiPSupported = ref('documentPictureInPicture' in window);
-        const autoNext = ref(true);
+createApp({
+  data() {
+    return {
+      videos: [],
+      pageSize: 10,
+      currentPage: 1,
+      searchQuery: '',
+      sortOrder: 'newest', // 預設從新到舊
+      playSpeed: '2',
+      displayCol: isMobile ? '1' : '2',
+      hashIndex: 0,
+      hashVideo: '',
+      showDropdown: 0,
+      startPos: null,
+      isPiPSupported: 'documentPictureInPicture' in window,
+      autoNext: true,
+      yturl: 'https://www.youtube.com'
+    };
+  },
 
-        const yturl = ref('https://www.youtube.com');
+  computed: {
+    filteredVideos() {
+      const sqVal = this.searchQuery.trim();
+      let isYTID;
 
-        const loadJsonLdData = () => {
-          const jsonLdScript = document.getElementById('json-ld-data');
-          if (jsonLdScript) {
-            try {
-              const jsonLd = JSON.parse(jsonLdScript.textContent);
-              videos.value = jsonLd.itemListElement.map(item => ({
-                id: item.item.embedUrl.split('/').pop(),
-                thumbnail: item.item.thumbnailUrl,
-                name: item.item.name,
-                description: item.item.description,
-                publishedAt: item.item.uploadDate,
-                url: item.url,
-                isShort: item.item.isShort,
-                index: item.position
-              }));
-            } catch (e) {
-              console.error('解析 JSON-LD 失敗:', e);
-            }
-          }
-        };
+      if (sqVal.length > 2) localStorage.setItem('keyword', sqVal);
 
-        const parseYouTubeTime = (t) => {
-          if (!t) return 0;
-          if (/^\d+$/.test(t)) return parseInt(t, 10);
+      if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
+        const ytURL = this.getYouTubeId(sqVal);
+        window.vid = isYTID ? sqVal : ytURL?.v;
+        let start = ytURL?.t || localStorage.getItem(`${vid}-start`);
+        this.hashVideo = `${this.yturl}/embed/${vid}?iv_load_policy=3&enablejsapi=1&start=${start}`;
 
-          let totalSeconds = 0;
-          const match = t.match(/(\d+h)?(\d+m)?(\d+s)?/);
-
-          if (match) {
-            if (match[1]) totalSeconds += parseInt(match[1], 10) * 3600;
-            if (match[2]) totalSeconds += parseInt(match[2], 10) * 60;
-            if (match[3]) totalSeconds += parseInt(match[3], 10);
-          }
-          return totalSeconds;
+        if (this.$refs.hashIframe) {
+          this.$refs.hashIframe.addEventListener('load', () => {
+            this.$refs.hashIframe.contentWindow.postMessage('{"event": "listening"}', this.yturl);
+            location.hash = vid + (ytURL?.t ? ytURL.t : '');
+          });
         }
 
-        function getYouTubeId(url) {
-          try {
-            const u = new URL(url.startsWith('http') ? url : 'https://'+ url);
-            var rets = {};
-
-            if (u.searchParams.has('t')) {
-              rets.t = parseYouTubeTime(u.searchParams.get('t'));
-            }
-
-            if (u.pathname === '/watch' && u.searchParams.has('v')) {
-              rets.v = u.searchParams.get('v');
-              return rets;
-            }
-
-            if (u.hostname === 'youtu.be') {
-              rets.v = u.pathname.slice(1);
-              return rets;
-            }
-
-            const match = u.pathname.match(/^\/(shorts|live|video)\/([^/?#]+)/);
-            if (match) {
-              rets.v = match[2];
-              return rets;
-            }
-
-          } catch (err) {
-            console.error('解析 YouTube URL 失敗:', err);
-          }
-          return null;
-        }
-
-        function parseIframeSrc(iframe) {
-          const template = document.createElement('template');
-          template.innerHTML = iframe;
-          return template.content.querySelector('iframe').src;
-        }
-
-        const filteredVideos = computed(() => {
-          const sqVal = searchQuery.value.trim();
-          let isYTID;
-
-          if (sqVal.length > 2) localStorage.setItem('keyword', sqVal);
-
-          if (/youtube.com|youtu.be/.test(sqVal) || (isYTID = /^[A-Za-z0-9_-]{11}$/.test(sqVal))) {
-            const ytURL = getYouTubeId(sqVal);
-            window.vid = isYTID ? sqVal : ytURL?.v;
-            let start = ytURL?.t || localStorage.getItem(`${vid}-start`);
-            hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1&start=${start}`;
-            hashIframe.value?.addEventListener('load', () => {
-              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
-              location.hash = vid + (ytURL?.t ? ytURL.t : '');
-            });
-            hashIndex.value = 0;
-            isPiPSupported.value = hashIframe.value && 'documentPictureInPicture' in window;
-            return videos.value;
-          } else if (/iframe/.test(sqVal)) {
-            const src = parseIframeSrc(sqVal);
-            hashVideo.value = src;
-            return videos.value;
-          }
-
-          const query = sqVal.toLowerCase();
-          if (!query || query.length < 2) return videos.value;
-          return videos.value.filter(video => {
-            return video.name.toLowerCase().includes(query)
-            || video.description.toLowerCase().includes(query)
-            || video.publishedAt.replace(/[-:TZ]/g, '').includes(query)
-            || (/^#\d+$/.test(query) && video.index == query.slice(1));
-          });
-        });
-
-        const sortedVideos = computed(() => {
-          if (!filteredVideos.value) return;
-          return filteredVideos.value.slice().sort((a, b) => {
-            const dateA = new Date(a.publishedAt);
-            const dateB = new Date(b.publishedAt);
-            return sortOrder.value === 'newest' ? dateB - dateA : dateA - dateB;
-          });
-        });
-
-        const displayedVideos = computed(() => {
-          if (!sortedVideos.value) return;
-          document.getElementById('playertop')?.scrollIntoView({
-            behavior: 'instant'
-          });
-
-          return sortedVideos.value.slice(pageSize.value * (currentPage.value - 1), pageSize.value * currentPage.value);
-        });
-
-        const hasMoreVideos = computed(() => {
-          if (!filteredVideos.value) return;
-          return currentPage.value * pageSize.value < filteredVideos.value.length;
-        });
-
-        const formatDate = (dateString) => {
-          const date = new Date(dateString);
-          return date.toLocaleDateString('zh-TW', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
-        };
-
-        const handleVideoError = (id) => {
-          const video = videos.value.find(v => v.id === id);
-          if (video) {
-            video.error = true;
-          }
-        };
-
-        const setupPlayer = () => {
-          if (hashIframe.value) {
-            hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
-            if (hashIframe.value.dataset.isshort == '0' || hashIframe.value.dataset.isshort == undefined) hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-          }
-        };
-
-        const goTo = (hashNum, fromClick) => {
-          if (hashNum && hashNum > 0 && hashNum <= videos.value.length) {
-            hashIndex.value = parseInt(hashNum);
-            window.vid = videos.value[hashIndex.value - 1].id;
-            let start = new URLSearchParams(location.search).get('start');
-            if (!start) {
-              start = localStorage.getItem(`${vid}-start`);
-            }
-            window.fromClick = fromClick;
-            hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1`+ (start ? `&start=${start}` : '');
-            hashIframe.value?.addEventListener('load', () => {
-              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
-              isPiPSupported.value = hashIframe.value && 'documentPictureInPicture' in window;
-              hashIndex.value && (location.hash = hashIndex.value);
-            });
-          }
-        };
-
-        const doDropdown = () => {
-          showDropdown.value = 1;
-          event.target.select();
-          setTimeout(() => {
-            if (lastScrollTop == -1 && dropdownRef.value) {
-              dropdownRef.value.scrollTop = dropdownRef.value.scrollHeight;
-            } else if (dropdownRef.value) {
-              dropdownRef.value.scrollTop = lastScrollTop;
-            }
-          }, 100);
-        };
-
-        const hideWithDelay = () => {
-          if (dropdownRef.value) {
-            lastScrollTop = dropdownRef.value.scrollTop;
-            setTimeout(() => showDropdown.value = 0, 100);
-          }
-        };
-
-        const startPiP = async () => {
-          const playerContainer = document.querySelector('#player .relative');
-          const player = document.querySelector('#player iframe');
-          try {
-            const pipWindow = await documentPictureInPicture.requestWindow({
-                    width: player.clientWidth,
-                    height: player.clientHeight
-            });
-                pipWindow.document.body.style.margin = 0;
-                pipWindow.document.body.style.padding = 0;
-                pipWindow.document.body.style.overflow = 'hidden';
-
-                player.style.width = '100vw';
-                player.style.height = '100vh';
-                player.style.border = 'none';
-                player.style.margin = 0;
-                player.style.padding = 0;
-                pipWindow.document.body.append(player);
-                pipWindow.addEventListener('unload', () => {
-                    playerContainer.append(player);
-                    player.style.width = '';
-                    player.style.height = '';
-                });
-          } catch (e) {
-          }
-        };
-
-        const unMute = async() => {
-          hashIframe.value?.contentWindow?.postMessage('{"event": "command", "func": "unMute"}', yturl.value);
-          const wrap = document.querySelector('#player .relative');
-          if (!wrap) return;
-          try {
-            if (wrap.requestFullscreen) {
-              await wrap.requestFullscreen();
-            } else if (wrap.webkitRequestFullscreen) {
-              wrap.webkitRequestFullscreen(); // Safari
-            } else if (wrap.mozRequestFullScreen) {
-              wrap.mozRequestFullScreen(); // old Firefox
-            } else if (wrap.msRequestFullscreen) {
-              wrap.msRequestFullscreen(); // old IE/Edge
-            }
-          } catch (err) {
-            console.warn("Fullscreen failed:", err);
-          }
-
-        };
-
-        watch(displayCol, (val) => {
-          switch(val) {
-          case "3":
-          case "4":
-            pageSize.value = 12;
-            break;
-          case "5":
-            pageSize.value = 15;
-            break;
-          }
-        });
-
-        onMounted(async () => {
-          const keyword = localStorage.getItem('keyword');
-
-          loadJsonLdData();
-
-          const loadMoreObserver = new IntersectionObserver(
-            (entries) => {
-              entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                  if (hasMoreVideos.value) {
-                    currentPage.value++;
-                  } else if (currentPage.value > 1 && entry.isIntersecting) {
-                    currentPage.value--;
-                  }
-                }
-              });
-            },
-            { threshold: 1, rootMargin: '0px 0px 10px 0px' }
-          );
-
-          await nextTick(); // 確保 DOM 渲染完成
-
-          window.addEventListener('message', (event) => {
-            if (hashIndex.value && event.data.includes('"playerState":0')) {
-              if (hashIndex.value) {
-                localStorage.removeItem(`${vid}-start`);
-                const idx = hashIndex.value + 1;
-                if (autoNext.value && idx <= videos.value.length) {
-                  hashIndex.value = idx;
-                  window.vid = videos.value[hashIndex.value - 1].id;
-                  hashVideo.value = `${yturl.value}/embed/${vid}?iv_load_policy=3&enablejsapi=1`;
-                }
-              }
-            } else if ((hashIndex.value > 0 || hashVideo.value) && event.data.includes('"event":"onReady"')) {
-              showDropdown.value = 0;
-              if (hashIndex.value > 0) playSpeed.value = videos.value[hashIndex.value - 1].isShort == "0" ? 2 : 1;
-              hashIframe.value.contentWindow.postMessage(`{"event": "command", "func": "setPlaybackRate", "args": [${playSpeed.value}, true]}`, yturl.value);
-              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "mute"}', yturl.value);
-              hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', yturl.value);
-              if (window.fromClick) {
-                window.fromClick = false;
-                !isMobile && hashIframe.value.contentWindow.postMessage('{"event": "command", "func": "unMute"}', yturl.value);
-              }
-              document.getElementById('player').scrollIntoView({
-                behavior: 'smooth'
-              });
-            } else if (event.data.includes('"currentTime"')) {
-              const data = JSON.parse(event.data);
-              const currentTime = parseInt(data.info.currentTime);
-              startPos.value = `start=${currentTime}`;
-              if (currentTime && currentTime % 10 == 0) {
-                localStorage.setItem(`${vid}-start`, currentTime);
-              }
-            }
-          });
-
-          const hashID = location.hash.slice(1);
-          if (hashID != '') {
-            const match = hashID.match(/^([A-Za-z0-9_-]{11})(\d*)$/);
-            if (match) {
-              searchQuery.value = match[1];
-              match[2] && localStorage.setItem(`${match[1]}-start`, match[2]);
-            } else
-              goTo(parseInt(hashID));
-            await nextTick();
-            hashIframe.value.addEventListener('load', () => {
-              hashIframe.value.contentWindow.postMessage('{"event": "listening"}', yturl.value);
-            });
-            document.getElementById('player').scrollIntoView({
-              behavior: 'smooth'
-            });
-          } else if (!/googlebot/i.test(navigator.userAgent)) {
-            goTo(videos.value.length);
-          }
-
-          if (keyword) searchQuery.value = keyword;
-
-          if (loadMoreTrigger.value) {
-            loadMoreObserver.observe(loadMoreTrigger.value);
-          }
-        });
-
-        return {
-          videos,
-          pageSize,
-          currentPage,
-          loadMoreTrigger,
-          searchQuery,
-          sortOrder,
-          playSpeed,
-          displayCol,
-          filteredVideos,
-          sortedVideos,
-          displayedVideos,
-          hasMoreVideos,
-          formatDate,
-          handleVideoError,
-          setupPlayer,
-          yturl,
-          hashIndex,
-          hashIframe,
-          hashVideo,
-          doDropdown,
-          showDropdown,
-          goTo,
-          hideWithDelay,
-          dropdownRef,
-          startPos,
-          isPiPSupported,
-          startPiP,
-          unMute,
-          autoNext
-        };
+        this.hashIndex = 0;
+        this.isPiPSupported = this.$refs.hashIframe && 'documentPictureInPicture' in window;
+        return this.videos;
+      } else if (/iframe/.test(sqVal)) {
+        const src = this.parseIframeSrc(sqVal);
+        this.hashVideo = src;
+        return this.videos;
       }
-    }).mount('#app');
-  </script>
+
+      const query = sqVal.toLowerCase();
+      if (!query || query.length < 2) return this.videos;
+
+      return this.videos.filter(video => {
+        return video.name.toLowerCase().includes(query)
+        || video.description.toLowerCase().includes(query)
+        || video.publishedAt.replace(/[-:TZ]/g, '').includes(query)
+        || (/^#\d+$/.test(query) && video.index == query.slice(1));
+      });
+    },
+
+    sortedVideos() {
+      if (!this.filteredVideos) return;
+      return this.filteredVideos.slice().sort((a, b) => {
+        const dateA = new Date(a.publishedAt);
+        const dateB = new Date(b.publishedAt);
+        return this.sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+      });
+    },
+
+    displayedVideos() {
+      if (!this.sortedVideos) return;
+      document.getElementById('playertop')?.scrollIntoView({
+        behavior: 'instant'
+      });
+
+      return this.sortedVideos.slice(
+        this.pageSize * (this.currentPage - 1),
+        this.pageSize * this.currentPage
+      );
+    },
+
+    hasMoreVideos() {
+      if (!this.filteredVideos) return;
+      return this.currentPage * this.pageSize < this.filteredVideos.length;
+    }
+  },
+
+  watch: {
+    displayCol(val) {
+      switch(val) {
+        case "3":
+        case "4":
+          this.pageSize = 12;
+          break;
+        case "5":
+          this.pageSize = 15;
+          break;
+      }
+    }
+  },
+
+  methods: {
+    loadJsonLdData() {
+      const jsonLdScript = document.getElementById('json-ld-data');
+      if (jsonLdScript) {
+        try {
+          const jsonLd = JSON.parse(jsonLdScript.textContent);
+          this.videos = jsonLd.itemListElement.map(item => ({
+            id: item.item.embedUrl.split('/').pop(),
+            thumbnail: item.item.thumbnailUrl,
+            name: item.item.name,
+            description: item.item.description,
+            publishedAt: item.item.uploadDate,
+            url: item.url,
+            isShort: item.item.isShort,
+            index: item.position
+          }));
+        } catch (e) {
+          console.error('解析 JSON-LD 失敗:', e);
+        }
+      }
+    },
+
+    parseYouTubeTime(t) {
+      if (!t) return 0;
+      if (/^\d+$/.test(t)) return parseInt(t, 10);
+
+      let totalSeconds = 0;
+      const match = t.match(/(\d+h)?(\d+m)?(\d+s)?/);
+
+      if (match) {
+        if (match[1]) totalSeconds += parseInt(match[1], 10) * 3600;
+        if (match[2]) totalSeconds += parseInt(match[2], 10) * 60;
+        if (match[3]) totalSeconds += parseInt(match[3], 10);
+      }
+      return totalSeconds;
+    },
+
+    getYouTubeId(url) {
+      try {
+        const u = new URL(url.startsWith('http') ? url : 'https://'+ url);
+        var rets = {};
+
+        if (u.searchParams.has('t')) {
+          rets.t = this.parseYouTubeTime(u.searchParams.get('t'));
+        }
+
+        if (u.pathname === '/watch' && u.searchParams.has('v')) {
+          rets.v = u.searchParams.get('v');
+          return rets;
+        }
+
+        if (u.hostname === 'youtu.be') {
+          rets.v = u.pathname.slice(1);
+          return rets;
+        }
+
+        const match = u.pathname.match(/^\/(shorts|live|video)\/([^/?#]+)/);
+        if (match) {
+          rets.v = match[2];
+          return rets;
+        }
+
+      } catch (err) {
+        console.error('解析 YouTube URL 失敗:', err);
+      }
+      return null;
+    },
+
+    parseIframeSrc(iframe) {
+      const template = document.createElement('template');
+      template.innerHTML = iframe;
+      return template.content.querySelector('iframe').src;
+    },
+
+    formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    },
+
+    handleVideoError(id) {
+      const video = this.videos.find(v => v.id === id);
+      if (video) {
+        video.error = true;
+      }
+    },
+
+    setupPlayer() {
+      if (this.$refs.hashIframe) {
+        this.$refs.hashIframe.contentWindow.postMessage('{"event": "listening"}', this.yturl);
+        if (this.$refs.hashIframe.dataset.isshort == '0' || this.$refs.hashIframe.dataset.isshort == undefined) {
+          this.$refs.hashIframe.contentWindow.postMessage(
+            `{"event": "command", "func": "setPlaybackRate", "args": [${this.playSpeed}, true]}`,
+            this.yturl
+          );
+        }
+      }
+    },
+
+    goTo(hashNum, fromClick) {
+      if (hashNum && hashNum > 0 && hashNum <= this.videos.length) {
+        this.hashIndex = parseInt(hashNum);
+        window.vid = this.videos[this.hashIndex - 1].id;
+        let start = new URLSearchParams(location.search).get('start');
+        if (!start) {
+          start = localStorage.getItem(`${vid}-start`);
+        }
+        window.fromClick = fromClick;
+        this.hashVideo = `${this.yturl}/embed/${vid}?iv_load_policy=3&enablejsapi=1`+ (start ? `&start=${start}` : '');
+
+        if (this.$refs.hashIframe) {
+          this.$refs.hashIframe.addEventListener('load', () => {
+            this.$refs.hashIframe.contentWindow.postMessage('{"event": "listening"}', this.yturl);
+            this.isPiPSupported = this.$refs.hashIframe && 'documentPictureInPicture' in window;
+            this.hashIndex && (location.hash = this.hashIndex);
+          });
+        }
+      }
+    },
+
+    doDropdown() {
+      this.showDropdown = 1;
+      event.target.select();
+      setTimeout(() => {
+        if (lastScrollTop == -1 && this.$refs.dropdownRef) {
+          this.$refs.dropdownRef.scrollTop = this.$refs.dropdownRef.scrollHeight;
+        } else if (this.$refs.dropdownRef) {
+          this.$refs.dropdownRef.scrollTop = lastScrollTop;
+        }
+      }, 100);
+    },
+
+    hideWithDelay() {
+      if (this.$refs.dropdownRef) {
+        lastScrollTop = this.$refs.dropdownRef.scrollTop;
+        setTimeout(() => this.showDropdown = 0, 100);
+      }
+    },
+
+    async startPiP() {
+      const playerContainer = document.querySelector('#player .relative');
+      const player = document.querySelector('#player iframe');
+      try {
+        const pipWindow = await documentPictureInPicture.requestWindow({
+          width: player.clientWidth,
+          height: player.clientHeight
+        });
+        pipWindow.document.body.style.margin = 0;
+        pipWindow.document.body.style.padding = 0;
+        pipWindow.document.body.style.overflow = 'hidden';
+
+        player.style.width = '100vw';
+        player.style.height = '100vh';
+        player.style.border = 'none';
+        player.style.margin = 0;
+        player.style.padding = 0;
+        pipWindow.document.body.append(player);
+        pipWindow.addEventListener('unload', () => {
+          playerContainer.append(player);
+          player.style.width = '';
+          player.style.height = '';
+        });
+      } catch (e) {
+        console.error('PiP error:', e);
+      }
+    },
+
+    async unMute() {
+      this.$refs.hashIframe?.contentWindow?.postMessage('{"event": "command", "func": "unMute"}', this.yturl);
+      const wrap = document.querySelector('#player .relative');
+      if (!wrap) return;
+      try {
+        if (wrap.requestFullscreen) {
+          await wrap.requestFullscreen();
+        } else if (wrap.webkitRequestFullscreen) {
+          wrap.webkitRequestFullscreen(); // Safari
+        } else if (wrap.mozRequestFullScreen) {
+          wrap.mozRequestFullScreen(); // old Firefox
+        } else if (wrap.msRequestFullscreen) {
+          wrap.msRequestFullscreen(); // old IE/Edge
+        }
+      } catch (err) {
+        console.warn("Fullscreen failed:", err);
+      }
+    }
+  },
+
+  async mounted() {
+    const keyword = localStorage.getItem('keyword');
+
+    this.loadJsonLdData();
+
+    const loadMoreObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (this.hasMoreVideos) {
+              this.currentPage++;
+            } else if (this.currentPage > 1 && entry.isIntersecting) {
+              this.currentPage--;
+            }
+          }
+        });
+      },
+      { threshold: 1, rootMargin: '0px 0px 10px 0px' }
+    );
+
+    await this.$nextTick(); // 確保 DOM 渲染完成
+
+    window.addEventListener('message', (event) => {
+      if (this.hashIndex && event.data.includes('"playerState":0')) {
+        if (this.hashIndex) {
+          localStorage.removeItem(`${vid}-start`);
+          const idx = this.hashIndex + 1;
+          if (this.autoNext && idx <= this.videos.length) {
+            this.hashIndex = idx;
+            window.vid = this.videos[this.hashIndex - 1].id;
+            this.hashVideo = `${this.yturl}/embed/${vid}?iv_load_policy=3&enablejsapi=1`;
+          }
+        }
+      } else if ((this.hashIndex > 0 || this.hashVideo) && event.data.includes('"event":"onReady"')) {
+        this.showDropdown = 0;
+        if (this.hashIndex > 0) {
+          this.playSpeed = this.videos[this.hashIndex - 1].isShort == "0" ? 2 : 1;
+        }
+        this.$refs.hashIframe.contentWindow.postMessage(
+          `{"event": "command", "func": "setPlaybackRate", "args": [${this.playSpeed}, true]}`,
+          this.yturl
+        );
+        this.$refs.hashIframe.contentWindow.postMessage('{"event": "command", "func": "mute"}', this.yturl);
+        this.$refs.hashIframe.contentWindow.postMessage('{"event": "command", "func": "playVideo"}', this.yturl);
+        if (window.fromClick) {
+          window.fromClick = false;
+          !isMobile && this.$refs.hashIframe.contentWindow.postMessage('{"event": "command", "func": "unMute"}', this.yturl);
+        }
+        document.getElementById('player').scrollIntoView({
+          behavior: 'smooth'
+        });
+      } else if (event.data.includes('"currentTime"')) {
+        const data = JSON.parse(event.data);
+        const currentTime = parseInt(data.info.currentTime);
+        this.startPos = `start=${currentTime}`;
+        if (currentTime && currentTime % 10 == 0) {
+          localStorage.setItem(`${vid}-start`, currentTime);
+        }
+      }
+    });
+
+    const hashID = location.hash.slice(1);
+    if (hashID != '') {
+      const match = hashID.match(/^([A-Za-z0-9_-]{11})(\d*)$/);
+      if (match) {
+        this.searchQuery = match[1];
+        match[2] && localStorage.setItem(`${match[1]}-start`, match[2]);
+      } else {
+        this.goTo(parseInt(hashID));
+      }
+      await this.$nextTick();
+      if (this.$refs.hashIframe) {
+        this.$refs.hashIframe.addEventListener('load', () => {
+          this.$refs.hashIframe.contentWindow.postMessage('{"event": "listening"}', this.yturl);
+        });
+      }
+      document.getElementById('player').scrollIntoView({
+        behavior: 'smooth'
+      });
+    } else if (!/googlebot/i.test(navigator.userAgent)) {
+      this.goTo(this.videos.length);
+    }
+
+    if (keyword) this.searchQuery = keyword;
+
+    if (this.$refs.loadMoreTrigger) {
+      loadMoreObserver.observe(this.$refs.loadMoreTrigger);
+    }
+  }
+}).mount('#app');
+
+</script>
 </body>
 </html>
