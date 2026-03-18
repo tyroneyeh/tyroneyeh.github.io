@@ -20202,7 +20202,7 @@
         </div>
         <p class="text-sm text-gray-600 mb-2 line-clamp-2" v-if="hashIndex"><a :href="`?${startPos}#${hashIndex}`">#{{ hashIndex }} {{ videos[hashIndex - 1].name }}</a> 發布日期: {{ formatDate(videos[hashIndex - 1].publishedAt) }} {{ videos[hashIndex - 1].description }}</p>
         <div class="flex flex-col"><input type="button" class="rounded-md bg-white/10 text-white bg-blue-700 font-semibold inset-ring inset-ring-white/5 hover:bg-white/20" @click="unMute" value="取消靜音"></div>
-        <div class="flex flex-col py-2"><button class="rounded-md bg-white/10 text-white bg-blue-700 font-semibold inset-ring inset-ring-white/5 hover:bg-white/20" @click="qrcodeText = !qrcodeText ? `${origin}/#${videos[hashIndex - 1].id}` : ''">QR Code</button></div>
+        <div class="flex flex-col py-2"><button class="rounded-md bg-white/10 text-white bg-blue-700 font-semibold inset-ring inset-ring-white/5 hover:bg-white/20" @click="qrcodeText = !qrcodeText ? `${origin}/#${hash}` : ''">QR Code</button></div>
         <div class="flex justify-center p-4 text-center sm:items-center sm:p-0" v-show="qrcodeText != ''" @click="qrcodeText = ''">
             <qrcode-vue class="responsive-qr" render-as="svg" :value="qrcodeText" :size="400" level="H"></qrcode-vue>
         </div>
@@ -20258,6 +20258,7 @@ createApp({
       autoNext: true,
       yturl: 'https://www.youtube.com',
       origin: globalThis.location.origin,
+      hash: globalThis.location.hash,
       qrcodeText: ''
     };
   },
